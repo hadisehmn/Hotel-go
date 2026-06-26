@@ -30,12 +30,7 @@ func (c *UserController) SignUp(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
 		return
 	}
-	// err = c.service.SignUp(user)
-	// if err != nil {
-	// 	fmt.Println("SIGNUP ERROR:", err)
-	// 	http.Error(w, err.Error(), http.StatusInternalServerError)
-	// 	return
-	// }
+
 	err = c.service.SignUp(user)
 	if err != nil {
 		fmt.Println("SIGNUP ERROR:", err)
@@ -66,4 +61,8 @@ func (c *UserController) SignIn(w http.ResponseWriter, r *http.Request) {
 	}
 
 	fmt.Fprintln(w, "Login Successful")
+}
+
+func AddHotel() {
+
 }

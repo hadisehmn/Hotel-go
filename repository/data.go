@@ -9,9 +9,18 @@ import (
 type UserRepository struct {
 	DB *sql.DB
 }
+type HotelRepository struct {
+	DB *sql.DB
+}
 
 func NewUserRepository(db *sql.DB) *UserRepository {
 	return &UserRepository{
+		DB: db,
+	}
+}
+
+func NewHotelRepository(db *sql.DB) *HotelRepository {
+	return &HotelRepository{
 		DB: db,
 	}
 }
@@ -54,4 +63,16 @@ func (r *UserRepository) ExistsByName(name string) (bool, error) {
 	).Scan(&exists)
 
 	return exists, err
+}
+
+func (r *HotelRepository) CreateHotel(h models.Hotel) error {
+
+	_, err := r.DB.Exec(
+		"INSERT INTO hotels(hotel_name, star, average_price) VALUES ($1, $2, $3)",
+		h.HotelName,
+		h.Star,
+		h.AveragePrice,
+	)
+	return err
+
 }

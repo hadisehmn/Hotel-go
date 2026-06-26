@@ -12,8 +12,18 @@ type UserService struct {
 	repo *repository.UserRepository
 }
 
+type HotelService struct {
+	repo *repository.HotelRepository
+}
+
 func NewUserService(repo *repository.UserRepository) *UserService {
 	return &UserService{
+		repo: repo,
+	}
+}
+
+func NewHotelService(repo *repository.HotelRepository) *HotelService {
+	return &HotelService{
 		repo: repo,
 	}
 }
@@ -56,4 +66,8 @@ func (s *UserService) SignIn(u models.User) error {
 		fmt.Println("Login Successful")
 		return nil
 	}
+}
+
+func (s *HotelService) AddHotel(h models.Hotel) error {
+	return s.repo.CreateHotel(h)
 }

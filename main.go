@@ -28,10 +28,14 @@ func main() {
 
 	repo := repository.NewUserRepository(db)
 	service := services.NewUserService(repo)
-
 	userController := controller.NewUserController(service)
+
+	hotelRepo := repository.NewHotelRepository(db)
+	hotelService := services.NewHotelService(hotelRepo)
+	hotelController := controller.NewHotelController(hotelService)
 
 	http.HandleFunc("/user/signup", userController.SignUp)
 	http.HandleFunc("/user/signin", userController.SignIn)
+	http.HandleFunc("/admin/addhotel", hotelController.AddHotel)
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
