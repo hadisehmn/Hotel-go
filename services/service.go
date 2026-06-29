@@ -16,6 +16,10 @@ type HotelService struct {
 	repo *repository.HotelRepository
 }
 
+type RoomService struct {
+	repo *repository.RoomRepository
+}
+
 func NewUserService(repo *repository.UserRepository) *UserService {
 	return &UserService{
 		repo: repo,
@@ -24,6 +28,12 @@ func NewUserService(repo *repository.UserRepository) *UserService {
 
 func NewHotelService(repo *repository.HotelRepository) *HotelService {
 	return &HotelService{
+		repo: repo,
+	}
+}
+
+func NewRoomService(repo *repository.RoomRepository) *RoomService {
+	return &RoomService{
 		repo: repo,
 	}
 }
@@ -82,4 +92,11 @@ func (s *HotelService) AddHotel(h models.Hotel) error {
 
 	fmt.Println("Hotel added")
 	return s.repo.CreateHotel(h)
+}
+
+func (s *RoomService) AddRoom(room models.Room) {
+
+	s.repo.CreateRoom(room)
+	fmt.Println("room added")
+
 }

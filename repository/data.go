@@ -13,6 +13,10 @@ type HotelRepository struct {
 	DB *sql.DB
 }
 
+type RoomRepository struct {
+	DB *sql.DB
+}
+
 func NewUserRepository(db *sql.DB) *UserRepository {
 	return &UserRepository{
 		DB: db,
@@ -25,6 +29,13 @@ func NewHotelRepository(db *sql.DB) *HotelRepository {
 	}
 }
 
+func NewRoomRepository(db *sql.DB) *RoomRepository {
+	return &RoomRepository{
+		DB: db,
+	}
+
+}
+
 func (r *UserRepository) CreateUser(u models.User) error {
 	_, err := r.DB.Exec(
 		"INSERT INTO users(name, phone, password_hash) VALUES ($1, $2, $3)",
@@ -33,6 +44,17 @@ func (r *UserRepository) CreateUser(u models.User) error {
 		u.Password,
 	)
 	return err
+}
+
+func (r *UserRepository) ExistsByName(name string) (bool, error) {
+	var exists bool
+
+	err := r.DB.QueryRow(
+		"SELECT EXISTS(SELECT 1 FROM users WHERE name=$1)",
+		name,
+	).Scan(&exists)
+
+	return exists, err
 }
 
 func (r *UserRepository) FindByName(name string) (models.User, error) {
@@ -52,17 +74,6 @@ func (r *UserRepository) FindByName(name string) (models.User, error) {
 
 	return user, nil
 
-}
-
-func (r *UserRepository) ExistsByName(name string) (bool, error) {
-	var exists bool
-
-	err := r.DB.QueryRow(
-		"SELECT EXISTS(SELECT 1 FROM users WHERE name=$1)",
-		name,
-	).Scan(&exists)
-
-	return exists, err
 }
 
 func (r *HotelRepository) CreateHotel(h models.Hotel) error {
@@ -85,5 +96,17 @@ func (r *HotelRepository) ExistsHotel(HotelName string) (bool, error) {
 		HotelName,
 	).Scan(&Exist)
 	return Exist, err
+
+}
+
+func (r *RoomRepository) CreateRoom(room models.Room) error {
+
+	_, err := r.DB.Exec(
+		"INSERT INTO rooms(room_name,room_type, price) VALUES ($1, $2, $3)",
+		room.RoomName,
+		room.RoomType,
+		room.Price,
+	)
+	return err
 
 }

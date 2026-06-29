@@ -34,8 +34,14 @@ func main() {
 	hotelService := services.NewHotelService(hotelRepo)
 	hotelController := controller.NewHotelController(hotelService)
 
+	roomRepo := repository.NewRoomRepository(db)
+	roomService := services.NewRoomService(roomRepo)
+	roomController := controller.NewRoomController(roomService)
+
 	http.HandleFunc("/user/signup", userController.SignUp)
 	http.HandleFunc("/user/signin", userController.SignIn)
 	http.HandleFunc("/admin/addhotel", hotelController.AddHotel)
+	http.HandleFunc("/admin/addroom", roomController.AddRoom)
+
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
