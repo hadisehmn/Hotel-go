@@ -76,3 +76,14 @@ func (r *HotelRepository) CreateHotel(h models.Hotel) error {
 	return err
 
 }
+
+func (r *HotelRepository) ExistsHotel(HotelName string) (bool, error) {
+	var Exist bool
+
+	err := r.DB.QueryRow(
+		"SELECT EXISTS(SELECT 1 FROM hotels WHERE hotel_name=$1)",
+		HotelName,
+	).Scan(&Exist)
+	return Exist, err
+
+}

@@ -69,5 +69,17 @@ func (s *UserService) SignIn(u models.User) error {
 }
 
 func (s *HotelService) AddHotel(h models.Hotel) error {
+
+	exist, err := s.repo.ExistsHotel(h.HotelName)
+	if err != nil {
+		return err
+	}
+
+	if exist {
+		fmt.Println("Hotel existed")
+		return fmt.Errorf("hotel already exists")
+	}
+
+	fmt.Println("Hotel added")
 	return s.repo.CreateHotel(h)
 }
