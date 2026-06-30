@@ -8,6 +8,7 @@ import (
 	"os"
 
 	"github.com/joho/godotenv"
+	_ "github.com/joho/godotenv"
 	_ "github.com/lib/pq"
 
 	"go-practice/HOTEL/controller"
@@ -16,11 +17,29 @@ import (
 )
 
 func main() {
-	// db, err := sql.Open("postgres",
-	// 		"postgres://postgres:123456@localhost:5436/hotel?sslmode=disable")
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
+
+	//Method yml
+	/*
+		file, err := os.ReadFile("config.yaml")
+		if err != nil {
+			log.Fatal(err)
+		}
+		var cfg config.Config
+		err = yaml.Unmarshal(file, &cfg)
+		if err != nil {
+			log.Fatal(err)
+		}
+		db, err := sql.Open("postgres", cfg.Database.URI)
+		if err != nil {
+			log.Fatal(err)
+		}
+		err = db.Ping()
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		fmt.Println("DB connected:", cfg.Database.Name)
+	*/
 
 	err := godotenv.Load()
 	if err != nil {

@@ -1,0 +1,4 @@
+# Method yml 
+# database:
+#   uri: "postgres://postgres:123456@localhost:5436/hotel?sslmode=disable"
+#   name: "hotel"

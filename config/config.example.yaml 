@@ -1,0 +1,3 @@
+database:
+  uri: "postgres://<user>:<password>@<host>:<port>/<db>"
+  name: "<database_name>"
