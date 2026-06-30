@@ -38,10 +38,15 @@ func main() {
 	roomService := services.NewRoomService(roomRepo)
 	roomController := controller.NewRoomController(roomService)
 
+	updateroomRepo := repository.NewRoomRepository(db)
+	updateroomService := services.NewRoomService(updateroomRepo)
+	updateroomController := controller.NewRoomController(updateroomService)
+
 	http.HandleFunc("/user/signup", userController.SignUp)
 	http.HandleFunc("/user/signin", userController.SignIn)
 	http.HandleFunc("/admin/addhotel", hotelController.AddHotel)
 	http.HandleFunc("/admin/addroom", roomController.AddRoom)
+	http.HandleFunc("/admin/updateroom", updateroomController.UpdateRoom)
 
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }

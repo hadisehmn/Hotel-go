@@ -94,9 +94,24 @@ func (s *HotelService) AddHotel(h models.Hotel) error {
 	return s.repo.CreateHotel(h)
 }
 
-func (s *RoomService) AddRoom(room models.Room) {
+func (s *RoomService) AddRoom(room models.Room) error {
+	exist, err := s.repo.ExistRoom(room.HotelID, room.RoomName)
+	if err != nil {
+		return err
 
-	s.repo.CreateRoom(room)
+	}
+	if exist {
+		fmt.Println("Room existed")
+		return fmt.Errorf("Room already exists")
+	}
 	fmt.Println("room added")
 
+	return s.repo.CreateRoom(room)
+
+}
+
+func (s *RoomService) UpdateRoom(id int, roomup models.UpdateRoom) error {
+	fmt.Printf("roomup: %+v\n", roomup)
+	fmt.Println("UPDATE ID:", id)
+	return s.repo.UpdateRoom(id, roomup)
 }

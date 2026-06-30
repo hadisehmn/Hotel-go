@@ -102,7 +102,8 @@ func (r *HotelRepository) ExistsHotel(HotelName string) (bool, error) {
 func (r *RoomRepository) CreateRoom(room models.Room) error {
 
 	_, err := r.DB.Exec(
-		"INSERT INTO rooms(room_name,room_type, price) VALUES ($1, $2, $3)",
+		"INSERT INTO rooms(hotel_id, room_name, room_type, price)VALUES ($1, $2, $3, $4)",
+		room.HotelID,
 		room.RoomName,
 		room.RoomType,
 		room.Price,
@@ -110,3 +111,43 @@ func (r *RoomRepository) CreateRoom(room models.Room) error {
 	return err
 
 }
+
+func (r *RoomRepository) ExistRoom(HotelID int, RoomName string) (bool, error) {
+	var Exist bool
+
+	err := r.DB.QueryRow(
+		"SELECT EXISTS(SELECT 1 FROM rooms WHERE hotel_id=$1 AND room_name=$2)",
+		HotelID,
+		RoomName,
+	).Scan(&Exist)
+	return Exist, err
+}
+
+func (r *RoomRepository) UpdateRoom(id int, roomup models.UpdateRoom) error {
+	_, err := r.DB.Exec(
+		"UPDATE rooms SET room_name = $1, room_type = $2, price = $3 WHERE id = $4",
+		roomup.RoomName,
+		roomup.RoomType,
+		roomup.Price,
+		id,
+	)
+	return err
+
+}
+
+// func (r *RoomRepository) FindById(id int) (models.UpdateRoom, error) {
+
+// 	var update models.UpdateRoom
+// 	err := r.DB.QueryRow(
+// 		"SELECT id FROM rooms WHERE id = $1",
+// 		id,
+// 	).Scan(
+// 		&update.ID,
+// 	)
+// 	if err == sql.ErrNoRows {
+// 		return update, fmt.Errorf("room not found")
+// 	}
+
+// 	return update, err
+
+// }

@@ -67,12 +67,35 @@ func (rc *RoomController) AddRoom(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	rc.service.AddRoom(room)
+	err = rc.service.AddRoom(room)
 	if err != nil {
 		fmt.Println(" add room error :", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 	fmt.Fprintln(w, "rooms Added ")
+
+}
+
+func (ru *RoomController) UpdateRoom(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	var roomup models.UpdateRoom
+
+	err := json.NewDecoder(r.Body).Decode(&roomup)
+	if err != nil {
+		http.Error(w, "Invalid body", http.StatusBadRequest)
+		return
+	}
+	err = ru.service.UpdateRoom(roomup.ID, roomup)
+	if err != nil {
+		fmt.Println(" update room error :", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	fmt.Fprintln(w, "room updated ")
 
 }
