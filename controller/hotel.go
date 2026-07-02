@@ -12,9 +12,9 @@ type HotelController struct {
 	service *services.HotelService
 }
 
-type RoomController struct {
-	service *services.RoomService
-}
+// type RoomController struct {
+// 	service *services.RoomService
+// }
 
 func NewHotelController(service *services.HotelService) *HotelController {
 	return &HotelController{
@@ -22,12 +22,12 @@ func NewHotelController(service *services.HotelService) *HotelController {
 	}
 }
 
-func NewRoomController(service *services.RoomService) *RoomController {
-	return &RoomController{
-		service: service,
-	}
+// func NewRoomController(service *services.RoomService) *RoomController {
+// 	return &RoomController{
+// 		service: service,
+// 	}
 
-}
+// }
 
 func (hc *HotelController) AddHotel(w http.ResponseWriter, r *http.Request) {
 
@@ -53,52 +53,52 @@ func (hc *HotelController) AddHotel(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func (rc *RoomController) AddRoom(w http.ResponseWriter, r *http.Request) {
+// func (rc *RoomController) AddRoom(w http.ResponseWriter, r *http.Request) {
 
-	if r.Method != http.MethodPost {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-		return
-	}
+// 	if r.Method != http.MethodPost {
+// 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+// 		return
+// 	}
 
-	var room models.Room
-	err := json.NewDecoder(r.Body).Decode(&room)
-	if err != nil {
-		http.Error(w, "Invalid body", http.StatusBadRequest)
-		return
-	}
+// 	var room models.Room
+// 	err := json.NewDecoder(r.Body).Decode(&room)
+// 	if err != nil {
+// 		http.Error(w, "Invalid body", http.StatusBadRequest)
+// 		return
+// 	}
 
-	err = rc.service.AddRoom(room)
-	if err != nil {
-		fmt.Println(" add room error :", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	fmt.Fprintln(w, "rooms Added ")
+// 	err = rc.service.AddRoom(room)
+// 	if err != nil {
+// 		fmt.Println(" add room error :", err)
+// 		http.Error(w, err.Error(), http.StatusInternalServerError)
+// 		return
+// 	}
+// 	fmt.Fprintln(w, "rooms Added ")
 
-}
+// }
 
-func (ru *RoomController) UpdateRoom(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-		return
-	}
+// func (ru *RoomController) UpdateRoom(w http.ResponseWriter, r *http.Request) {
+// 	if r.Method != http.MethodPost {
+// 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+// 		return
+// 	}
 
-	var roomup models.UpdateRoom
+// 	var roomup models.UpdateRoom
 
-	err := json.NewDecoder(r.Body).Decode(&roomup)
-	if err != nil {
-		http.Error(w, "Invalid body", http.StatusBadRequest)
-		return
-	}
-	err = ru.service.UpdateRoom(roomup.ID, roomup)
-	if err != nil {
-		fmt.Println(" update room error :", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	fmt.Fprintln(w, "room updated ")
+// 	err := json.NewDecoder(r.Body).Decode(&roomup)
+// 	if err != nil {
+// 		http.Error(w, "Invalid body", http.StatusBadRequest)
+// 		return
+// 	}
+// 	err = ru.service.UpdateRoom(roomup.ID, roomup)
+// 	if err != nil {
+// 		fmt.Println(" update room error :", err)
+// 		http.Error(w, err.Error(), http.StatusInternalServerError)
+// 		return
+// 	}
+// 	fmt.Fprintln(w, "room updated ")
 
-}
+// }
 
 func (hd *HotelController) DeletHotel(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodDelete {
@@ -116,11 +116,30 @@ func (hd *HotelController) DeletHotel(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Missing id or hotel name", http.StatusBadRequest)
 		return
 	}
-	err = hd.service.DeleteHotel(deletehotel.ID, deletehotel.HotelName)
+	err = hd.service.DeleteHotel(deletehotel)
 	if err != nil {
-		http.Error(w, "Hotel not found ", http.StatusInternalServerError)
+		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	}
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("Hotel deleted successfully"))
+	fmt.Fprintln(w, "Hotel deleted successfully")
 }
+
+// func (rd *HotelController) DeleteRoom(w http.ResponseWriter, r *http.Request) {
+// 	if r.Method != http.MethodDelete {
+// 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+// 		return
+// 	}
+// 	var deleteroom models.DeleteRoom
+// 	err := json.NewDecoder(r.Body).Decode(&deleteroom)
+// 	if err != nil {
+// 		http.Error(w, "Invalid body", http.StatusBadRequest)
+// 		return
+// 	}
+// 	if deleteroom.ID == 0 || deleteroom.RoomName == "" {
+// 		http.Error(w, "Missing id or room name", http.StatusBadRequest)
+// 		return
+// 	}
+// 	w.WriteHeader(http.StatusOK)
+// 	fmt.Fprintln(w, "Room deleted successfully")
+// }

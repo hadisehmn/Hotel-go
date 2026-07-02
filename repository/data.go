@@ -134,12 +134,10 @@ func (r *RoomRepository) UpdateRoom(id int, roomup models.UpdateRoom) error {
 	return err
 
 }
-
-func (r *HotelRepository) DeleteHotel(id int, hotelName string) error {
+func (r *HotelRepository) DeleteHotel(deletehotel models.DeleteHotel) error {
 	_, err := r.DB.Exec(
-		"DELETE FROM hotels WHERE id=$1 AND hotel_name=$2",
-		id,
-		hotelName,
+		"DELETE FROM hotels WHERE id=$1",
+		deletehotel.ID,
 	)
 	if err != nil {
 		return err

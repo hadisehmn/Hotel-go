@@ -116,6 +116,6 @@ func (s *RoomService) UpdateRoom(id int, roomup models.UpdateRoom) error {
 	return s.repo.UpdateRoom(id, roomup)
 }
 
-func (s *HotelService) DeleteHotel(id int, hotelName string) error {
-	return s.repo.DeleteHotel(id, hotelName)
+func (s *HotelService) DeleteHotel(deletehotel models.DeleteHotel) error {
+	return s.repo.DeleteHotel(deletehotel)
 }
