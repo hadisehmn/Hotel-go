@@ -99,3 +99,28 @@ func (ru *RoomController) UpdateRoom(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintln(w, "room updated ")
 
 }
+
+func (hd *HotelController) DeletHotel(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodDelete {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	var deletehotel models.DeleteHotel
+	err := json.NewDecoder(r.Body).Decode(&deletehotel)
+	if err != nil {
+		http.Error(w, "Invalid body", http.StatusBadRequest)
+		return
+	}
+
+	if deletehotel.ID == 0 || deletehotel.HotelName == "" {
+		http.Error(w, "Missing id or hotel name", http.StatusBadRequest)
+		return
+	}
+	err = hd.service.DeleteHotel(deletehotel.ID, deletehotel.HotelName)
+	if err != nil {
+		http.Error(w, "Hotel not found ", http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("Hotel deleted successfully"))
+}

@@ -6,3 +6,8 @@ type Hotel struct {
 	Star         int
 	AveragePrice int
 }
+
+type DeleteHotel struct {
+	ID        int    `json:"id"`
+	HotelName string `json:"hotel_name"`
+}

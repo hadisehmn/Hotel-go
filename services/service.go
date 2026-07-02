@@ -111,7 +111,11 @@ func (s *RoomService) AddRoom(room models.Room) error {
 }
 
 func (s *RoomService) UpdateRoom(id int, roomup models.UpdateRoom) error {
-	fmt.Printf("roomup: %+v\n", roomup)
+	// fmt.Printf("roomup: %+v\n", roomup)
 	fmt.Println("UPDATE ID:", id)
 	return s.repo.UpdateRoom(id, roomup)
+}
+
+func (s *HotelService) DeleteHotel(id int, hotelName string) error {
+	return s.repo.DeleteHotel(id, hotelName)
 }

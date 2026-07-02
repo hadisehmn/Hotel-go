@@ -135,6 +135,18 @@ func (r *RoomRepository) UpdateRoom(id int, roomup models.UpdateRoom) error {
 
 }
 
+func (r *HotelRepository) DeleteHotel(id int, hotelName string) error {
+	_, err := r.DB.Exec(
+		"DELETE FROM hotels WHERE id=$1 AND hotel_name=$2",
+		id,
+		hotelName,
+	)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 // func (r *RoomRepository) FindById(id int) (models.UpdateRoom, error) {
 
 // 	var update models.UpdateRoom
