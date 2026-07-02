@@ -145,6 +145,17 @@ func (r *HotelRepository) DeleteHotel(deletehotel models.DeleteHotel) error {
 	return nil
 }
 
+func (r *RoomRepository) DeleteRoom(deleteroom models.DeleteRoom) error {
+	_, err := r.DB.Exec(
+		"DELETE FROM rooms WHERE id=$1",
+		deleteroom.ID,
+	)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 // func (r *RoomRepository) FindById(id int) (models.UpdateRoom, error) {
 
 // 	var update models.UpdateRoom

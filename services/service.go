@@ -119,3 +119,8 @@ func (s *RoomService) UpdateRoom(id int, roomup models.UpdateRoom) error {
 func (s *HotelService) DeleteHotel(deletehotel models.DeleteHotel) error {
 	return s.repo.DeleteHotel(deletehotel)
 }
+
+func (s *RoomService) DeleteRoom(deleteroom models.DeleteRoom) error {
+	return s.repo.DeleteRoom(deleteroom)
+
+}

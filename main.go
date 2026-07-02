@@ -78,12 +78,17 @@ func main() {
 	deletehotelService := services.NewHotelService(deletehotelRepo)
 	deletehotelController := controller.NewHotelController(deletehotelService)
 
+	deleteroomRepo := repository.NewRoomRepository(db)
+	deleteroomService := services.NewRoomService(deleteroomRepo)
+	deleteroomController := controller.NewRoomController(deleteroomService)
+
 	http.HandleFunc("/user/signup", userController.SignUp)
 	http.HandleFunc("/user/signin", userController.SignIn)
 	http.HandleFunc("/admin/addhotel", hotelController.AddHotel)
 	http.HandleFunc("/admin/addroom", roomController.AddRoom)
 	http.HandleFunc("/admin/updateroom", updateroomController.UpdateRoom)
 	http.HandleFunc("/admin/deletehotel", deletehotelController.DeletHotel)
+	http.HandleFunc("/admin/deleteroom", deleteroomController.DeleteRoom)
 
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }

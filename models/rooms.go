@@ -22,6 +22,5 @@ type UpdateRoom struct {
 	Price    float64  `json:"price"`
 }
 type DeleteRoom struct {
-	ID       int    `json:"id"`
-	RoomName string `json:"room_name"`
+	ID int `json:"id"`
 }

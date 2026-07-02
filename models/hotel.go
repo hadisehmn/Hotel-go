@@ -8,6 +8,5 @@ type Hotel struct {
 }
 
 type DeleteHotel struct {
-	ID        int    `json:"id"`
-	HotelName string `json:"hotel_name"`
+	ID int `json:"id"`
 }

@@ -66,7 +66,7 @@ func (ru *RoomController) UpdateRoom(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func (rd *HotelController) DeleteRoom(w http.ResponseWriter, r *http.Request) {
+func (rd *RoomController) DeleteRoom(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodDelete {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
@@ -77,8 +77,8 @@ func (rd *HotelController) DeleteRoom(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Invalid body", http.StatusBadRequest)
 		return
 	}
-	if deleteroom.ID == 0 || deleteroom.RoomName == "" {
-		http.Error(w, "Missing id or room name", http.StatusBadRequest)
+	if deleteroom.ID == 0 {
+		http.Error(w, "Missing room  id ", http.StatusBadRequest)
 		return
 	}
 	w.WriteHeader(http.StatusOK)
