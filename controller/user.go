@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"go-practice/HOTEL/models"
 	"go-practice/HOTEL/services"
+	"log"
 	"net/http"
 )
 
@@ -33,12 +34,19 @@ func (c *UserController) SignUp(w http.ResponseWriter, r *http.Request) {
 
 	err = c.service.SignUp(user)
 	if err != nil {
-		fmt.Println("SIGNUP ERROR:", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		log.Printf("SignUp failed: %v", err)
+
+		if err.Error() == "user already exists" {
+			http.Error(w, "User already exists", http.StatusConflict)
+			return
+		}
+
+		http.Error(w, "Failed to create user", http.StatusInternalServerError)
 		return
 	}
 
-	fmt.Fprintln(w, "User Created")
+	w.WriteHeader(http.StatusCreated)
+	fmt.Fprintln(w, "User created successfully")
 }
 
 func (c *UserController) SignIn(w http.ResponseWriter, r *http.Request) {
@@ -56,13 +64,21 @@ func (c *UserController) SignIn(w http.ResponseWriter, r *http.Request) {
 	}
 	err = c.service.SignIn(user)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusUnauthorized)
+		log.Printf("SignIn failed: %v", err)
+
+		if err.Error() == "user not found" {
+			http.Error(w, "User not found", http.StatusNotFound)
+			return
+		}
+
+		if err.Error() == "wrong password" {
+			http.Error(w, "Wrong password", http.StatusUnauthorized)
+			return
+		}
+
+		http.Error(w, "Authentication failed", http.StatusUnauthorized)
 		return
 	}
 
-	fmt.Fprintln(w, "Login Successful")
-}
-
-func AddHotel() {
-
+	fmt.Fprintln(w, "Login successful")
 }

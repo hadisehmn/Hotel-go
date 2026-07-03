@@ -42,7 +42,7 @@ func (s *UserService) SignUp(u models.User) error {
 
 	exists, err := s.repo.ExistsByName(u.Name)
 	if err != nil {
-		return err
+		return fmt.Errorf("signup: %w", err)
 	}
 
 	if exists {
@@ -51,20 +51,23 @@ func (s *UserService) SignUp(u models.User) error {
 
 	hashed, err := bcrypt.GenerateFromPassword([]byte(u.Password), bcrypt.DefaultCost)
 	if err != nil {
-		return err
+		return fmt.Errorf("hash password: %w", err)
 	}
 
 	u.Password = string(hashed)
 
-	return s.repo.CreateUser(u)
+	if err := s.repo.CreateUser(u); err != nil {
+		return fmt.Errorf("signup: %w", err)
+	}
+
+	return nil
 }
 
 func (s *UserService) SignIn(u models.User) error {
 
 	user, err := s.repo.FindByName(u.Name)
 	if err != nil {
-		return err
-
+		return fmt.Errorf("signin: %w", err)
 	}
 	err = bcrypt.CompareHashAndPassword(
 		[]byte(user.Password),
@@ -72,55 +75,66 @@ func (s *UserService) SignIn(u models.User) error {
 
 	if err != nil {
 		return fmt.Errorf("wrong password")
-	} else {
-		fmt.Println("Login Successful")
-		return nil
 	}
+	return nil
 }
 
 func (s *HotelService) AddHotel(h models.Hotel) error {
 
 	exist, err := s.repo.ExistsHotel(h.HotelName)
 	if err != nil {
-		return err
+		return fmt.Errorf("add hotel: %w", err)
 	}
 
 	if exist {
-		fmt.Println("Hotel existed")
 		return fmt.Errorf("hotel already exists")
 	}
 
-	fmt.Println("Hotel added")
-	return s.repo.CreateHotel(h)
+	if err := s.repo.CreateHotel(h); err != nil {
+		return fmt.Errorf("add hotel: %w", err)
+	}
+
+	return nil
 }
 
 func (s *RoomService) AddRoom(room models.Room) error {
 	exist, err := s.repo.ExistRoom(room.HotelID, room.RoomName)
 	if err != nil {
-		return err
-
+		return fmt.Errorf("add room: %w", err)
 	}
+
 	if exist {
-		fmt.Println("Room existed")
 		return fmt.Errorf("Room already exists")
 	}
-	fmt.Println("room added")
 
-	return s.repo.CreateRoom(room)
+	if err := s.repo.CreateRoom(room); err != nil {
+		return fmt.Errorf("add room: %w", err)
+	}
 
+	return nil
 }
 
 func (s *RoomService) UpdateRoom(id int, roomup models.UpdateRoom) error {
 	// fmt.Printf("roomup: %+v\n", roomup)
-	fmt.Println("UPDATE ID:", id)
-	return s.repo.UpdateRoom(id, roomup)
+	if err := s.repo.UpdateRoom(id, roomup); err != nil {
+		return fmt.Errorf("update room: %w", err)
+	}
+
+	return nil
 }
 
 func (s *HotelService) DeleteHotel(deletehotel models.DeleteHotel) error {
-	return s.repo.DeleteHotel(deletehotel)
+	if err := s.repo.DeleteHotel(deletehotel); err != nil {
+		return fmt.Errorf("delete hotel: %w", err)
+	}
+
+	return nil
 }
 
 func (s *RoomService) DeleteRoom(deleteroom models.DeleteRoom) error {
-	return s.repo.DeleteRoom(deleteroom)
+	if err := s.repo.DeleteRoom(deleteroom); err != nil {
+		return fmt.Errorf("delete room: %w", err)
+	}
 
+	return nil
 }

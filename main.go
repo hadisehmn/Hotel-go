@@ -87,7 +87,7 @@ func main() {
 	http.HandleFunc("/admin/addhotel", hotelController.AddHotel)
 	http.HandleFunc("/admin/addroom", roomController.AddRoom)
 	http.HandleFunc("/admin/updateroom", updateroomController.UpdateRoom)
-	http.HandleFunc("/admin/deletehotel", deletehotelController.DeletHotel)
+	http.HandleFunc("/admin/deletehotel", deletehotelController.DeleteHotel)
 	http.HandleFunc("/admin/deleteroom", deleteroomController.DeleteRoom)
 
 	log.Fatal(http.ListenAndServe(":8080", nil))

@@ -43,7 +43,10 @@ func (r *UserRepository) CreateUser(u models.User) error {
 		u.Phone,
 		u.Password,
 	)
-	return err
+	if err != nil {
+		return fmt.Errorf("create user: %w", err)
+	}
+	return nil
 }
 
 func (r *UserRepository) ExistsByName(name string) (bool, error) {
@@ -54,7 +57,11 @@ func (r *UserRepository) ExistsByName(name string) (bool, error) {
 		name,
 	).Scan(&exists)
 
-	return exists, err
+	if err != nil {
+		return false, fmt.Errorf("check user exists: %w", err)
+	}
+
+	return exists, nil
 }
 
 func (r *UserRepository) FindByName(name string) (models.User, error) {
@@ -69,7 +76,8 @@ func (r *UserRepository) FindByName(name string) (models.User, error) {
 		if err == sql.ErrNoRows {
 			return user, fmt.Errorf("user not found")
 		}
-		return user, err
+
+		return user, fmt.Errorf("find user by name: %w", err)
 	}
 
 	return user, nil
@@ -84,8 +92,10 @@ func (r *HotelRepository) CreateHotel(h models.Hotel) error {
 		h.Star,
 		h.AveragePrice,
 	)
-	return err
-
+	if err != nil {
+		return fmt.Errorf("create hotel: %w", err)
+	}
+	return nil
 }
 
 func (r *HotelRepository) ExistsHotel(HotelName string) (bool, error) {
@@ -95,7 +105,11 @@ func (r *HotelRepository) ExistsHotel(HotelName string) (bool, error) {
 		"SELECT EXISTS(SELECT 1 FROM hotels WHERE hotel_name=$1)",
 		HotelName,
 	).Scan(&Exist)
-	return Exist, err
+	if err != nil {
+		return false, fmt.Errorf("check hotel exists: %w", err)
+	}
+
+	return Exist, nil
 
 }
 
@@ -108,8 +122,10 @@ func (r *RoomRepository) CreateRoom(room models.Room) error {
 		room.RoomType,
 		room.Price,
 	)
-	return err
-
+	if err != nil {
+		return fmt.Errorf("create room: %w", err)
+	}
+	return nil
 }
 
 func (r *RoomRepository) ExistRoom(HotelID int, RoomName string) (bool, error) {
@@ -120,7 +136,10 @@ func (r *RoomRepository) ExistRoom(HotelID int, RoomName string) (bool, error) {
 		HotelID,
 		RoomName,
 	).Scan(&Exist)
-	return Exist, err
+	if err != nil {
+		return false, fmt.Errorf("check room exists: %w", err)
+	}
+	return Exist, nil
 }
 
 func (r *RoomRepository) UpdateRoom(id int, roomup models.UpdateRoom) error {
@@ -131,8 +150,10 @@ func (r *RoomRepository) UpdateRoom(id int, roomup models.UpdateRoom) error {
 		roomup.Price,
 		id,
 	)
-	return err
-
+	if err != nil {
+		return fmt.Errorf("update room: %w", err)
+	}
+	return nil
 }
 func (r *HotelRepository) DeleteHotel(deletehotel models.DeleteHotel) error {
 	_, err := r.DB.Exec(
@@ -140,7 +161,7 @@ func (r *HotelRepository) DeleteHotel(deletehotel models.DeleteHotel) error {
 		deletehotel.ID,
 	)
 	if err != nil {
-		return err
+		return fmt.Errorf("delete hotel: %w", err)
 	}
 	return nil
 }
@@ -151,7 +172,7 @@ func (r *RoomRepository) DeleteRoom(deleteroom models.DeleteRoom) error {
 		deleteroom.ID,
 	)
 	if err != nil {
-		return err
+		return fmt.Errorf("delete room: %w", err)
 	}
 	return nil
 }

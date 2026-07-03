@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"go-practice/HOTEL/models"
 	"go-practice/HOTEL/services"
+	"log"
 	"net/http"
 )
 
@@ -33,8 +34,15 @@ func (hc *HotelController) AddHotel(w http.ResponseWriter, r *http.Request) {
 
 	err = hc.service.AddHotel(h)
 	if err != nil {
-		fmt.Println(" add hotel error :", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		log.Printf("AddHotel failed: %v", err)
+		log.Printf("AddHotel failed: %v", err)
+
+		if err.Error() == "hotel already exists" {
+			http.Error(w, "Hotel already exists", http.StatusConflict)
+			return
+		}
+
+		http.Error(w, "Failed to add hotel", http.StatusInternalServerError)
 		return
 	}
 
@@ -42,7 +50,7 @@ func (hc *HotelController) AddHotel(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func (hd *HotelController) DeletHotel(w http.ResponseWriter, r *http.Request) {
+func (hd *HotelController) DeleteHotel(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodDelete {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
@@ -60,7 +68,14 @@ func (hd *HotelController) DeletHotel(w http.ResponseWriter, r *http.Request) {
 	}
 	err = hd.service.DeleteHotel(deletehotel)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusNotFound)
+		log.Printf("DeleteHotel failed: %v", err)
+
+		if err.Error() == "hotel not found" {
+			http.Error(w, "Hotel not found", http.StatusNotFound)
+			return
+		}
+
+		http.Error(w, "Failed to delete hotel", http.StatusInternalServerError)
 		return
 	}
 	w.WriteHeader(http.StatusOK)

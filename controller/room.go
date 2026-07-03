@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"go-practice/HOTEL/models"
 	"go-practice/HOTEL/services"
+	"log"
 	"net/http"
 )
 
@@ -35,11 +36,21 @@ func (rc *RoomController) AddRoom(w http.ResponseWriter, r *http.Request) {
 
 	err = rc.service.AddRoom(room)
 	if err != nil {
-		fmt.Println(" add room error :", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		log.Printf("AddRoom failed: %v", err)
+
+		switch err.Error() {
+
+		case "room already exists":
+			http.Error(w, "Room already exists", http.StatusConflict)
+			return
+
+		default:
+			http.Error(w, "Room already exists", http.StatusInternalServerError)
+
+		}
 		return
 	}
-	fmt.Fprintln(w, "rooms Added ")
+	fmt.Fprintln(w, "Room added successfully")
 
 }
 
@@ -58,8 +69,16 @@ func (ru *RoomController) UpdateRoom(w http.ResponseWriter, r *http.Request) {
 	}
 	err = ru.service.UpdateRoom(roomup.ID, roomup)
 	if err != nil {
-		fmt.Println(" update room error :", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		log.Printf("UpdateRoom failed: %v", err)
+
+		switch err.Error() {
+		case "room not found":
+			http.Error(w, "Room not found", http.StatusNotFound)
+			return
+		default:
+			http.Error(w, "Failed to update room", http.StatusInternalServerError)
+
+		}
 		return
 	}
 	fmt.Fprintln(w, "room updated ")
@@ -81,6 +100,12 @@ func (rd *RoomController) DeleteRoom(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Missing room  id ", http.StatusBadRequest)
 		return
 	}
-	w.WriteHeader(http.StatusOK)
+	err = rd.service.DeleteRoom(deleteroom)
+	if err != nil {
+		log.Printf("DeleteRoom failed: %v", err)
+		http.Error(w, "Failed to delete room", http.StatusInternalServerError)
+		return
+	}
+
 	fmt.Fprintln(w, "Room deleted successfully")
 }
