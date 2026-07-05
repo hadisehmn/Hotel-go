@@ -40,8 +40,4 @@ reservation functionality for hotels
 - Booking System
 - Room Availability
 - JWT Authentication
-- Swagger Documentation
 - Docker Support
-- Unit Tests
-- Logging
-- Pagination
