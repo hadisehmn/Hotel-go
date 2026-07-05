@@ -12,6 +12,7 @@ import (
 	_ "github.com/lib/pq"
 
 	"go-practice/HOTEL/controller"
+	"go-practice/HOTEL/controller/middleware"
 	"go-practice/HOTEL/repository"
 	"go-practice/HOTEL/services"
 )
@@ -58,9 +59,12 @@ func main() {
 	}
 	fmt.Println("DB connected successfully")
 
-	repo := repository.NewUserRepository(db)
-	service := services.NewUserService(repo)
-	userController := controller.NewUserController(service)
+	userRepo := repository.NewUserRepository(db)
+	userService := services.NewUserService(userRepo)
+	userController := controller.NewUserController(userService)
+
+	http.HandleFunc("/user/signup", userController.SignUp)
+	http.HandleFunc("/user/signin", userController.SignIn)
 
 	hotelRepo := repository.NewHotelRepository(db)
 	hotelService := services.NewHotelService(hotelRepo)
@@ -70,25 +74,53 @@ func main() {
 	roomService := services.NewRoomService(roomRepo)
 	roomController := controller.NewRoomController(roomService)
 
-	updateroomRepo := repository.NewRoomRepository(db)
-	updateroomService := services.NewRoomService(updateroomRepo)
-	updateroomController := controller.NewRoomController(updateroomService)
+	// updateroomRepo := repository.NewRoomRepository(db)
+	// updateroomService := services.NewRoomService(updateroomRepo)
+	// updateroomController := controller.NewRoomController(updateroomService)
 
-	deletehotelRepo := repository.NewHotelRepository(db)
-	deletehotelService := services.NewHotelService(deletehotelRepo)
-	deletehotelController := controller.NewHotelController(deletehotelService)
+	// deletehotelRepo := repository.NewHotelRepository(db)
+	// deletehotelService := services.NewHotelService(deletehotelRepo)
+	// deletehotelController := controller.NewHotelController(deletehotelService)
 
-	deleteroomRepo := repository.NewRoomRepository(db)
-	deleteroomService := services.NewRoomService(deleteroomRepo)
-	deleteroomController := controller.NewRoomController(deleteroomService)
+	// deleteroomRepo := repository.NewRoomRepository(db)
+	// deleteroomService := services.NewRoomService(deleteroomRepo)
+	// deleteroomController := controller.NewRoomController(deleteroomService)
 
-	http.HandleFunc("/user/signup", userController.SignUp)
-	http.HandleFunc("/user/signin", userController.SignIn)
-	http.HandleFunc("/admin/addhotel", hotelController.AddHotel)
-	http.HandleFunc("/admin/addroom", roomController.AddRoom)
-	http.HandleFunc("/admin/updateroom", updateroomController.UpdateRoom)
-	http.HandleFunc("/admin/deletehotel", deletehotelController.DeleteHotel)
-	http.HandleFunc("/admin/deleteroom", deleteroomController.DeleteRoom)
+	http.Handle("/admin/addhotel",
+		middleware.Authentication(
+			http.HandlerFunc(hotelController.AddHotel),
+		),
+	)
+
+	http.Handle("/admin/addroom",
+		middleware.Authentication(
+			http.HandlerFunc(roomController.AddRoom),
+		),
+	)
+
+	http.Handle("/admin/updateroom",
+		middleware.Authentication(
+			http.HandlerFunc(roomController.UpdateRoom),
+		),
+	)
+
+	http.Handle("/admin/deletehotel",
+		middleware.Authentication(
+			http.HandlerFunc(hotelController.DeleteHotel),
+		),
+	)
+
+	http.Handle("/admin/deleteroom",
+		middleware.Authentication(
+			http.HandlerFunc(roomController.DeleteRoom),
+		),
+	)
+
+	// http.HandleFunc("/admin/addhotel", hotelController.AddHotel)
+	// http.HandleFunc("/admin/addroom", roomController.AddRoom)
+	// http.HandleFunc("/admin/updateroom", updateroomController.UpdateRoom)
+	// http.HandleFunc("/admin/deletehotel", deletehotelController.DeleteHotel)
+	// http.HandleFunc("/admin/deleteroom", deleteroomController.DeleteRoom)
 
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }

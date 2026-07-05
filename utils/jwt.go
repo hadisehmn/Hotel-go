@@ -9,10 +9,9 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-var secretKey []byte
+var secretKey = []byte(os.Getenv("SECRET_KEY"))
 
 func GenerateToken(user models.User) (string, error) {
-	secretKey := []byte(os.Getenv("SECRET_KEY"))
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"user_id":  user.ID,
@@ -27,4 +26,13 @@ func GenerateToken(user models.User) (string, error) {
 
 	return accessToken, nil
 
+}
+
+func ParseToken(accessToken string) (*jwt.Token, error) {
+
+	token, err := jwt.Parse(accessToken, func(token *jwt.Token) (interface{}, error) {
+		return secretKey, nil
+	})
+
+	return token, err
 }
