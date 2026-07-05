@@ -25,10 +25,3 @@ func GenerateToken(user models.User) (string, error) {
 	return accessToken, nil
 
 }
-
-func ParseToken(tokenString string) (*jwt.Token, error) {
-
-	return jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-		return secretKey, nil
-	})
-}
