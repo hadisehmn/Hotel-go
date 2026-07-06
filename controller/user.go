@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"go-practice/HOTEL/models"
 	"go-practice/HOTEL/services"
+	"go-practice/HOTEL/utils"
 	"log"
 	"net/http"
 )
@@ -62,7 +63,7 @@ func (c *UserController) SignIn(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
 		return
 	}
-	err = c.service.SignIn(user)
+	dbUser, err := c.service.SignIn(user)
 	if err != nil {
 		log.Printf("SignIn failed: %v", err)
 
@@ -80,5 +81,14 @@ func (c *UserController) SignIn(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fmt.Fprintln(w, "Login successful")
+	token, err := utils.GenerateToken(dbUser)
+	if err != nil {
+		http.Error(w, "Failed to generate token", http.StatusInternalServerError)
+		return
+	}
+
+	json.NewEncoder(w).Encode(map[string]string{
+		"message": "login successful",
+		"token":   token,
+	})
 }

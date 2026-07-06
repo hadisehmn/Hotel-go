@@ -63,20 +63,21 @@ func (s *UserService) SignUp(u models.User) error {
 	return nil
 }
 
-func (s *UserService) SignIn(u models.User) error {
+func (s *UserService) SignIn(u models.User) (models.User, error) {
+	var emptyUser models.User
 
 	user, err := s.repo.FindByName(u.Name)
 	if err != nil {
-		return fmt.Errorf("signin: %w", err)
+		return emptyUser, fmt.Errorf("user not found")
 	}
 	err = bcrypt.CompareHashAndPassword(
 		[]byte(user.Password),
 		[]byte(u.Password))
 
 	if err != nil {
-		return fmt.Errorf("wrong password")
+		return emptyUser, fmt.Errorf("wrong password")
 	}
-	return nil
+	return user, nil
 }
 
 func (s *HotelService) AddHotel(h models.Hotel) error {

@@ -6,4 +6,5 @@ type User struct {
 	Password string `db:"password"`
 	Age      int    `db:"age"`
 	Phone    string `db:"phone"`
+	Role     string `db:"role"`
 }

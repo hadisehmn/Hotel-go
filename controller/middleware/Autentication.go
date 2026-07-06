@@ -24,6 +24,7 @@ func Authentication(next http.Handler) http.Handler {
 			http.Error(w, "Invalid token", http.StatusUnauthorized)
 			return
 		}
+
 		next.ServeHTTP(w, r)
 
 	})
