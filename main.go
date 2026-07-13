@@ -63,9 +63,6 @@ func main() {
 	userService := services.NewUserService(userRepo)
 	userController := controller.NewUserController(userService)
 
-	http.HandleFunc("/user/signup", userController.SignUp)
-	http.HandleFunc("/user/signin", userController.SignIn)
-
 	hotelRepo := repository.NewHotelRepository(db)
 	hotelService := services.NewHotelService(hotelRepo)
 	hotelController := controller.NewHotelController(hotelService)
@@ -74,17 +71,9 @@ func main() {
 	roomService := services.NewRoomService(roomRepo)
 	roomController := controller.NewRoomController(roomService)
 
-	// updateroomRepo := repository.NewRoomRepository(db)
-	// updateroomService := services.NewRoomService(updateroomRepo)
-	// updateroomController := controller.NewRoomController(updateroomService)
-
-	// deletehotelRepo := repository.NewHotelRepository(db)
-	// deletehotelService := services.NewHotelService(deletehotelRepo)
-	// deletehotelController := controller.NewHotelController(deletehotelService)
-
-	// deleteroomRepo := repository.NewRoomRepository(db)
-	// deleteroomService := services.NewRoomService(deleteroomRepo)
-	// deleteroomController := controller.NewRoomController(deleteroomService)
+	http.HandleFunc("/user/signup", userController.SignUp)
+	http.HandleFunc("/user/signin", userController.SignIn)
+	http.HandleFunc("/user/hotellist", hotelController.HotelsList)
 
 	http.Handle("/admin/addhotel",
 		middleware.Authentication(
@@ -115,12 +104,6 @@ func main() {
 			http.HandlerFunc(roomController.DeleteRoom),
 		),
 	)
-
-	// http.HandleFunc("/admin/addhotel", hotelController.AddHotel)
-	// http.HandleFunc("/admin/addroom", roomController.AddRoom)
-	// http.HandleFunc("/admin/updateroom", updateroomController.UpdateRoom)
-	// http.HandleFunc("/admin/deletehotel", deletehotelController.DeleteHotel)
-	// http.HandleFunc("/admin/deleteroom", deleteroomController.DeleteRoom)
 
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }

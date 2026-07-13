@@ -7,6 +7,7 @@ import (
 	"go-practice/HOTEL/services"
 	"log"
 	"net/http"
+	"strconv"
 )
 
 type HotelController struct {
@@ -80,4 +81,37 @@ func (hd *HotelController) DeleteHotel(w http.ResponseWriter, r *http.Request) {
 	}
 	w.WriteHeader(http.StatusOK)
 	fmt.Fprintln(w, "Hotel deleted successfully")
+}
+
+func (hl *HotelController) HotelsList(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+
+	}
+
+	starParam := r.URL.Query().Get("star")
+	priceParam := r.URL.Query().Get("averageprice")
+
+	star, _ := strconv.Atoi(starParam)
+	price, _ := strconv.Atoi(priceParam)
+
+	list, err := hl.service.HotelsList(star, price)
+	if err != nil {
+		http.Error(w, "Failed to get hotels", http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+
+	if len(list) == 0 {
+		w.WriteHeader(http.StatusNotFound)
+
+		json.NewEncoder(w).Encode(map[string]string{
+			"message": "No hotels found",
+		})
+		return
+	}
+
+	json.NewEncoder(w).Encode(list)
+
 }

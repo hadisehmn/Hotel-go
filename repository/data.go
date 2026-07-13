@@ -177,6 +177,42 @@ func (r *RoomRepository) DeleteRoom(deleteroom models.DeleteRoom) error {
 	return nil
 }
 
+func (r *HotelRepository) HotelsList(star int, price int) ([]models.Hotel, error) {
+	var hotels []models.Hotel
+
+	query := "SELECT id, hotel_name, star, average_price FROM hotels WHERE 1=1"
+	params := []any{}
+	i := 1
+
+	if star > 0 {
+		query += fmt.Sprintf(" AND star = $%d", i)
+		params = append(params, star)
+		i++
+
+	}
+	if price > 0 {
+		query += fmt.Sprintf(" AND average_price >= $%d", i)
+		params = append(params, price)
+		i++
+	}
+	result, err := r.DB.Query(query, params...)
+	if err != nil {
+		return nil, err
+	}
+
+	for result.Next() {
+		var h models.Hotel
+		err := result.Scan(&h.ID, &h.HotelName, &h.Star, &h.AveragePrice)
+		if err != nil {
+			return nil, err
+		}
+		hotels = append(hotels, h)
+
+	}
+	return hotels, nil
+
+}
+
 // func (r *RoomRepository) FindById(id int) (models.UpdateRoom, error) {
 
 // 	var update models.UpdateRoom
