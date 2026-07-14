@@ -213,6 +213,42 @@ func (r *HotelRepository) HotelsList(star int, price int) ([]models.Hotel, error
 
 }
 
+func (r *RoomRepository) RoomList(filter models.RoomList) ([]models.Room, error) {
+	var rooms []models.Room
+	query := "SELECT id,hotel_id ,room_name, room_type, price FROM rooms WHERE 1=1"
+	params := []any{}
+	i := 1
+
+	if filter.Price != nil {
+		query += fmt.Sprintf(" AND price >= $%d", i)
+		params = append(params, *filter.Price)
+		i++
+	}
+	if filter.RoomType != nil {
+		query += fmt.Sprintf(" AND room_type ILIKE $%d", i)
+		params = append(params, *filter.RoomType)
+		i++
+
+	}
+	result, err := r.DB.Query(query, params...)
+	if err != nil {
+		return nil, err
+
+	}
+
+	for result.Next() {
+		var r models.Room
+		err := result.Scan(&r.ID, &r.HotelID, &r.RoomName, &r.RoomType, &r.Price)
+		if err != nil {
+			return nil, err
+		}
+		rooms = append(rooms, r)
+
+	}
+	return rooms, nil
+
+}
+
 // func (r *RoomRepository) FindById(id int) (models.UpdateRoom, error) {
 
 // 	var update models.UpdateRoom

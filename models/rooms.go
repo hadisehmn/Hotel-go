@@ -9,6 +9,7 @@ const (
 )
 
 type Room struct {
+	ID       int      `json:"id"`
 	HotelID  int      `json:"hotel_id"`
 	RoomName string   `json:"room_name"`
 	RoomType RoomType `json:"room_type"`
@@ -23,4 +24,9 @@ type UpdateRoom struct {
 }
 type DeleteRoom struct {
 	ID int `json:"id"`
+}
+
+type RoomList struct {
+	Price    *float64  `json:"price"`
+	RoomType *RoomType `json:"room_type"`
 }

@@ -7,6 +7,7 @@ import (
 	"go-practice/HOTEL/services"
 	"log"
 	"net/http"
+	"strconv"
 )
 
 type RoomController struct {
@@ -108,4 +109,49 @@ func (rd *RoomController) DeleteRoom(w http.ResponseWriter, r *http.Request) {
 	}
 
 	fmt.Fprintln(w, "Room deleted successfully")
+}
+
+func (rl *RoomController) RoomList(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	var filter models.RoomList
+
+	RoomTypeParam := r.URL.Query().Get("roomtype")
+	priceParam := r.URL.Query().Get("price")
+
+	if RoomTypeParam != "" {
+		roomType := models.RoomType(RoomTypeParam)
+		filter.RoomType = &roomType
+	}
+
+	if priceParam != "" {
+		p, err := strconv.ParseFloat(priceParam, 64)
+		if err != nil {
+			http.Error(w, "invalid price", http.StatusBadRequest)
+			return
+		}
+
+		filter.Price = &p
+	}
+
+	list, err := rl.service.RoomList(filter)
+	if err != nil {
+		http.Error(w, "Failed to get rooms", http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+
+	if len(list) == 0 {
+		w.WriteHeader(http.StatusNotFound)
+
+		json.NewEncoder(w).Encode(map[string]string{
+			"message": "No rooms found",
+		})
+		return
+	}
+
+	json.NewEncoder(w).Encode(list)
+
 }

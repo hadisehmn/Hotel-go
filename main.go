@@ -74,6 +74,7 @@ func main() {
 	http.HandleFunc("/user/signup", userController.SignUp)
 	http.HandleFunc("/user/signin", userController.SignIn)
 	http.HandleFunc("/user/hotellist", hotelController.HotelsList)
+	http.HandleFunc("/user/roomlist", roomController.RoomList)
 
 	http.Handle("/admin/addhotel",
 		middleware.Authentication(
