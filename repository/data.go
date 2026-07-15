@@ -177,22 +177,22 @@ func (r *RoomRepository) DeleteRoom(deleteroom models.DeleteRoom) error {
 	return nil
 }
 
-func (r *HotelRepository) HotelsList(star int, price int) ([]models.Hotel, error) {
+func (r *HotelRepository) HotelsList(filter models.HotelList) ([]models.Hotel, error) {
 	var hotels []models.Hotel
 
 	query := "SELECT id, hotel_name, star, average_price FROM hotels WHERE 1=1"
 	params := []any{}
 	i := 1
 
-	if star > 0 {
+	if filter.Star != nil {
 		query += fmt.Sprintf(" AND star = $%d", i)
-		params = append(params, star)
+		params = append(params, *filter.Star)
 		i++
 
 	}
-	if price > 0 {
+	if filter.AveragePrice != nil {
 		query += fmt.Sprintf(" AND average_price >= $%d", i)
-		params = append(params, price)
+		params = append(params, *filter.AveragePrice)
 		i++
 	}
 	result, err := r.DB.Query(query, params...)
@@ -246,6 +246,10 @@ func (r *RoomRepository) RoomList(filter models.RoomList) ([]models.Room, error)
 
 	}
 	return rooms, nil
+
+}
+
+func (r *RoomRepository) BookRoom() {
 
 }
 

@@ -140,11 +140,14 @@ func (s *RoomService) DeleteRoom(deleteroom models.DeleteRoom) error {
 	return nil
 }
 
-func (s *HotelService) HotelsList(star int, price int) ([]models.Hotel, error) {
-	return s.repo.HotelsList(star, price)
+func (s *HotelService) HotelsList(filter models.HotelList) ([]models.Hotel, error) {
+	return s.repo.HotelsList(filter)
 }
-
 func (s *RoomService) RoomList(filter models.RoomList) ([]models.Room, error) {
 	return s.repo.RoomList(filter)
 
 }
+
+// func (s *RoomService) BookRoom(roomID int, reserve models.BookRoomRequest) (*models.Booking, error) {
+
+// }

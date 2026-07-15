@@ -12,6 +12,6 @@ type DeleteHotel struct {
 }
 
 type HotelList struct {
-	Star         int     `json:"star"`
-	AveragePrice float64 `json:"averageprice"`
+	Star         *int     `json:"star"`
+	AveragePrice *float64 `json:"averageprice"`
 }

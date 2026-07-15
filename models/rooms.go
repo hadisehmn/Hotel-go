@@ -1,11 +1,21 @@
 package models
 
+import "time"
+
 type RoomType string
 
 const (
 	Standard RoomType = "standard"
 	Single   RoomType = "single"
 	Double   RoomType = "double"
+)
+
+type GuestType string
+
+const (
+	Adult  GuestType = "adult"
+	Child  GuestType = "child"
+	Infant GuestType = "infant"
 )
 
 type Room struct {
@@ -29,4 +39,11 @@ type DeleteRoom struct {
 type RoomList struct {
 	Price    *float64  `json:"price"`
 	RoomType *RoomType `json:"room_type"`
+}
+
+type BookRoomRequest struct {
+	UserID   int         `json:"user_id"`
+	CheckIn  time.Time   `json:"check_in"`
+	CheckOut time.Time   `json:"check_out"`
+	Guests   []GuestType `json:"guests"`
 }

@@ -90,13 +90,31 @@ func (hl *HotelController) HotelsList(w http.ResponseWriter, r *http.Request) {
 
 	}
 
+	var filter models.HotelList
+
 	starParam := r.URL.Query().Get("star")
 	priceParam := r.URL.Query().Get("averageprice")
 
-	star, _ := strconv.Atoi(starParam)
-	price, _ := strconv.Atoi(priceParam)
+	if starParam != "" {
+		star, err := strconv.Atoi(starParam)
+		if err != nil {
+			http.Error(w, "invalid star", http.StatusBadRequest)
+			return
 
-	list, err := hl.service.HotelsList(star, price)
+		}
+		filter.Star = &star
+	}
+
+	if priceParam != "" {
+		price, err := strconv.ParseFloat(priceParam, 64)
+		if err != nil {
+			http.Error(w, "invalid average price", http.StatusBadRequest)
+			return
+		}
+		filter.AveragePrice = &price
+	}
+
+	list, err := hl.service.HotelsList(filter)
 	if err != nil {
 		http.Error(w, "Failed to get hotels", http.StatusInternalServerError)
 		return

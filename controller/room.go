@@ -155,3 +155,50 @@ func (rl *RoomController) RoomList(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(list)
 
 }
+
+// func (br *RoomController) BookRoom(w http.ResponseWriter, r *http.Request) {
+
+// 	if r.Method != http.MethodPost {
+// 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+// 		return
+// 	}
+
+// 	roomIdParam := r.URL.Query().Get("room_id")
+
+// 	if roomIdParam == "" {
+// 		http.Error(w, "room_id is Require ", http.StatusBadRequest)
+// 		return
+
+// 	}
+// 	roomID, err := strconv.Atoi(roomIdParam)
+
+// 	if err != nil {
+// 		http.Error(w, "invalid room_id", http.StatusBadRequest)
+// 		return
+// 	}
+
+// 	var reserve models.BookRoomRequest
+
+// 	err = json.NewDecoder(r.Body).Decode(&reserve)
+// 	if err != nil {
+// 		http.Error(w, "invalid body", http.StatusBadRequest)
+// 		return
+// 	}
+
+// 	if reserve.CheckIn.IsZero() || reserve.CheckOut.IsZero() {
+// 		http.Error(w, "check_in and check_out are required", http.StatusBadRequest)
+// 		return
+
+// 	}
+
+// 	booking, err := br.service.BookRoom(roomID, reserve)
+// 	if err != nil {
+// 		http.Error(w, err.Error(), http.StatusBadRequest)
+// 		return
+// 	}
+
+// 	w.WriteHeader(http.StatusCreated)
+
+// 	json.NewEncoder(w).Encode(booking)
+
+// }
