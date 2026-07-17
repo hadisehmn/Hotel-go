@@ -249,10 +249,6 @@ func (r *RoomRepository) RoomList(filter models.RoomList) ([]models.Room, error)
 
 }
 
-func (r *RoomRepository) BookRoom() {
-
-}
-
 // func (r *RoomRepository) FindById(id int) (models.UpdateRoom, error) {
 
 // 	var update models.UpdateRoom
