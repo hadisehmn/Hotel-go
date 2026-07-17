@@ -71,5 +71,3 @@ func AdminOnly(next http.Handler) http.Handler {
 	})
 
 }
-
-// admin

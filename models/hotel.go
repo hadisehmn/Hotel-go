@@ -15,5 +15,3 @@ type HotelList struct {
 	Star         *int     `json:"star"`
 	AveragePrice *float64 `json:"averageprice"`
 }
-
-// admin

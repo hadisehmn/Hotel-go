@@ -268,3 +268,5 @@ func (r *RoomRepository) RoomList(filter models.RoomList) ([]models.Room, error)
 // 	return update, err
 
 // }
+
+// admin

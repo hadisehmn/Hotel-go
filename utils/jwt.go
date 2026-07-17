@@ -40,5 +40,3 @@ func ParseToken(accessToken string) (*jwt.Token, error) {
 
 	return token, err
 }
-
-// admin

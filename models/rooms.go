@@ -50,5 +50,3 @@ type BookRoomRequest struct {
 	CheckOut time.Time   `json:"check_out"`
 	Guests   []GuestType `json:"guests"`
 }
-
-// admin

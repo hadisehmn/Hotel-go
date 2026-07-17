@@ -133,5 +133,3 @@ func (hl *HotelController) HotelsList(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(list)
 
 }
-
-// admin
