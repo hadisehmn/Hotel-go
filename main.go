@@ -76,6 +76,8 @@ func main() {
 	http.HandleFunc("/user/hotellist", hotelController.HotelsList)
 	http.HandleFunc("/user/roomlist", roomController.RoomList)
 
+	// admin
+
 	http.Handle("/admin/addhotel",
 		middleware.Authentication(
 			middleware.AdminOnly(
