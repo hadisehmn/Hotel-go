@@ -24,6 +24,7 @@ type Room struct {
 	RoomName string   `json:"room_name"`
 	RoomType RoomType `json:"room_type"`
 	Price    float64  `json:"price"`
+	Capacity int      `json:"capacity"`
 }
 
 type UpdateRoom struct {
@@ -31,6 +32,7 @@ type UpdateRoom struct {
 	RoomName string   `json:"room_name"`
 	RoomType RoomType `json:"room_type"`
 	Price    float64  `json:"price"`
+	Capacity int      `json:"capacity"`
 }
 type DeleteRoom struct {
 	ID int `json:"id"`
@@ -42,6 +44,7 @@ type RoomList struct {
 }
 
 type BookRoomRequest struct {
+	RoomID   int         `json:"room_id"`
 	UserID   int         `json:"user_id"`
 	CheckIn  time.Time   `json:"check_in"`
 	CheckOut time.Time   `json:"check_out"`

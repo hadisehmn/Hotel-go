@@ -38,10 +38,11 @@ func NewRoomRepository(db *sql.DB) *RoomRepository {
 
 func (r *UserRepository) CreateUser(u models.User) error {
 	_, err := r.DB.Exec(
-		"INSERT INTO users(name, phone, password_hash) VALUES ($1, $2, $3)",
+		"INSERT INTO users(name, phone, password_hash , role) VALUES ($1, $2, $3 ,$4 )",
 		u.Name,
 		u.Phone,
 		u.Password,
+		u.Role,
 	)
 	if err != nil {
 		return fmt.Errorf("create user: %w", err)
@@ -67,10 +68,11 @@ func (r *UserRepository) ExistsByName(name string) (bool, error) {
 func (r *UserRepository) FindByName(name string) (models.User, error) {
 	var user models.User
 	err := r.DB.QueryRow(
-		"SELECT name, password_hash FROM users WHERE name = $1", name,
+		"SELECT name, password_hash , role FROM users WHERE name = $1", name,
 	).Scan(
 		&user.Name,
 		&user.Password,
+		&user.Role,
 	)
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -116,11 +118,12 @@ func (r *HotelRepository) ExistsHotel(HotelName string) (bool, error) {
 func (r *RoomRepository) CreateRoom(room models.Room) error {
 
 	_, err := r.DB.Exec(
-		"INSERT INTO rooms(hotel_id, room_name, room_type, price)VALUES ($1, $2, $3, $4)",
+		"INSERT INTO rooms(hotel_id, room_name, room_type, price , capacity)VALUES ($1, $2, $3, $4 , $5)",
 		room.HotelID,
 		room.RoomName,
 		room.RoomType,
 		room.Price,
+		room.Capacity,
 	)
 	if err != nil {
 		return fmt.Errorf("create room: %w", err)

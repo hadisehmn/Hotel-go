@@ -29,7 +29,7 @@ func main() {
 		err = yaml.Unmarshal(file, &cfg)
 		if err != nil {
 			log.Fatal(err)
-		}
+
 		db, err := sql.Open("postgres", cfg.Database.URI)
 		if err != nil {
 			log.Fatal(err)
@@ -78,31 +78,41 @@ func main() {
 
 	http.Handle("/admin/addhotel",
 		middleware.Authentication(
-			http.HandlerFunc(hotelController.AddHotel),
+			middleware.AdminOnly(
+				http.HandlerFunc(hotelController.AddHotel),
+			),
 		),
 	)
 
 	http.Handle("/admin/addroom",
 		middleware.Authentication(
-			http.HandlerFunc(roomController.AddRoom),
+			middleware.AdminOnly(
+				http.HandlerFunc(roomController.AddRoom),
+			),
 		),
 	)
 
 	http.Handle("/admin/updateroom",
 		middleware.Authentication(
-			http.HandlerFunc(roomController.UpdateRoom),
+			middleware.AdminOnly(
+				http.HandlerFunc(roomController.UpdateRoom),
+			),
 		),
 	)
 
 	http.Handle("/admin/deletehotel",
 		middleware.Authentication(
-			http.HandlerFunc(hotelController.DeleteHotel),
+			middleware.AdminOnly(
+				http.HandlerFunc(hotelController.DeleteHotel),
+			),
 		),
 	)
 
 	http.Handle("/admin/deleteroom",
 		middleware.Authentication(
-			http.HandlerFunc(roomController.DeleteRoom),
+			middleware.AdminOnly(
+				http.HandlerFunc(roomController.DeleteRoom),
+			),
 		),
 	)
 

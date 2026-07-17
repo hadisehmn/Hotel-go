@@ -9,7 +9,10 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-var secretKey = []byte(os.Getenv("SECRET_KEY"))
+// var secretKey = []byte(os.Getenv("SECRET_KEY"))
+func getSecretKey() []byte {
+	return []byte(os.Getenv("SECRET_KEY"))
+}
 
 func GenerateToken(user models.User) (string, error) {
 
@@ -17,8 +20,9 @@ func GenerateToken(user models.User) (string, error) {
 		"username": user.Name,
 		"phone":    user.Phone,
 		"exp":      time.Now().Add(time.Minute * 5).Unix(),
+		"role":     user.Role,
 	})
-	accessToken, err := token.SignedString(secretKey)
+	accessToken, err := token.SignedString(getSecretKey())
 	if err != nil {
 		panic(err)
 	}
@@ -31,7 +35,7 @@ func GenerateToken(user models.User) (string, error) {
 func ParseToken(accessToken string) (*jwt.Token, error) {
 
 	token, err := jwt.Parse(accessToken, func(token *jwt.Token) (interface{}, error) {
-		return secretKey, nil
+		return getSecretKey(), nil
 	})
 
 	return token, err

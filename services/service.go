@@ -49,6 +49,8 @@ func (s *UserService) SignUp(u models.User) error {
 		return fmt.Errorf("user already exists")
 	}
 
+	u.Role = models.UserRoleUser
+
 	hashed, err := bcrypt.GenerateFromPassword([]byte(u.Password), bcrypt.DefaultCost)
 	if err != nil {
 		return fmt.Errorf("hash password: %w", err)
@@ -99,6 +101,11 @@ func (s *HotelService) AddHotel(h models.Hotel) error {
 }
 
 func (s *RoomService) AddRoom(room models.Room) error {
+
+	if room.Capacity <= 0 {
+		return fmt.Errorf("invalid room capacity")
+	}
+
 	exist, err := s.repo.ExistRoom(room.HotelID, room.RoomName)
 	if err != nil {
 		return fmt.Errorf("add room: %w", err)
