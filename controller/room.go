@@ -216,3 +216,5 @@ func (rl *RoomController) RoomList(w http.ResponseWriter, r *http.Request) {
 // 	fmt.Fprintln(w, "Room booked successfully")
 
 // }
+
+// admin

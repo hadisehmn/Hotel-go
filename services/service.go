@@ -155,3 +155,5 @@ func (s *RoomService) RoomList(filter models.RoomList) ([]models.Room, error) {
 	return s.repo.RoomList(filter)
 
 }
+
+// admin

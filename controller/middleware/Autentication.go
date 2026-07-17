@@ -33,7 +33,6 @@ func Authentication(next http.Handler) http.Handler {
 	})
 }
 
-// admin
 func AdminOnly(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
@@ -72,3 +71,5 @@ func AdminOnly(next http.Handler) http.Handler {
 	})
 
 }
+
+// admin

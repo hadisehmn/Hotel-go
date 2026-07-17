@@ -15,3 +15,5 @@ type User struct {
 	Phone    string   `db:"phone"`
 	Role     UserRole `db:"role"`
 }
+
+// admin

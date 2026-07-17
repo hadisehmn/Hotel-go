@@ -92,3 +92,5 @@ func (c *UserController) SignIn(w http.ResponseWriter, r *http.Request) {
 		"token":   token,
 	})
 }
+
+// admin
