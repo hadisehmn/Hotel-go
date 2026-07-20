@@ -16,6 +16,9 @@ type HotelRepository struct {
 type RoomRepository struct {
 	DB *sql.DB
 }
+type BookingRepository struct {
+	DB *sql.DB
+}
 
 func NewUserRepository(db *sql.DB) *UserRepository {
 	return &UserRepository{
@@ -31,6 +34,12 @@ func NewHotelRepository(db *sql.DB) *HotelRepository {
 
 func NewRoomRepository(db *sql.DB) *RoomRepository {
 	return &RoomRepository{
+		DB: db,
+	}
+
+}
+func NewBookingRepository(db *sql.DB) *BookingRepository {
+	return &BookingRepository{
 		DB: db,
 	}
 
@@ -68,8 +77,9 @@ func (r *UserRepository) ExistsByName(name string) (bool, error) {
 func (r *UserRepository) FindByName(name string) (models.User, error) {
 	var user models.User
 	err := r.DB.QueryRow(
-		"SELECT name, password_hash , role FROM users WHERE name = $1", name,
+		"SELECT id, name, password_hash, role FROM users WHERE name = $1", name,
 	).Scan(
+		&user.ID,
 		&user.Name,
 		&user.Password,
 		&user.Role,
@@ -118,11 +128,11 @@ func (r *HotelRepository) ExistsHotel(HotelName string) (bool, error) {
 func (r *RoomRepository) CreateRoom(room models.Room) error {
 
 	_, err := r.DB.Exec(
-		"INSERT INTO rooms(hotel_id, room_name, room_type, price , capacity)VALUES ($1, $2, $3, $4 , $5)",
+		"INSERT INTO rooms(hotel_id, room_type, price, total_rooms, capacity) VALUES ($1, $2, $3, $4, $5)",
 		room.HotelID,
-		room.RoomName,
 		room.RoomType,
 		room.Price,
+		room.TotalRooms,
 		room.Capacity,
 	)
 	if err != nil {
@@ -131,13 +141,13 @@ func (r *RoomRepository) CreateRoom(room models.Room) error {
 	return nil
 }
 
-func (r *RoomRepository) ExistRoom(HotelID int, RoomName string) (bool, error) {
+func (r *RoomRepository) ExistRoom(HotelID int, roomType models.RoomType) (bool, error) {
 	var Exist bool
 
 	err := r.DB.QueryRow(
-		"SELECT EXISTS(SELECT 1 FROM rooms WHERE hotel_id=$1 AND room_name=$2)",
+		"SELECT EXISTS(SELECT 1 FROM rooms WHERE hotel_id=$1 AND room_type=$2)",
 		HotelID,
-		RoomName,
+		roomType,
 	).Scan(&Exist)
 	if err != nil {
 		return false, fmt.Errorf("check room exists: %w", err)
@@ -147,10 +157,11 @@ func (r *RoomRepository) ExistRoom(HotelID int, RoomName string) (bool, error) {
 
 func (r *RoomRepository) UpdateRoom(id int, roomup models.UpdateRoom) error {
 	_, err := r.DB.Exec(
-		"UPDATE rooms SET room_name = $1, room_type = $2, price = $3 WHERE id = $4",
-		roomup.RoomName,
+		"UPDATE rooms SET room_type=$1, price=$2, total_rooms=$3 , capacity=$4 WHERE id = $5",
 		roomup.RoomType,
 		roomup.Price,
+		roomup.TotalRooms,
+		roomup.Capacity,
 		id,
 	)
 	if err != nil {
@@ -218,7 +229,7 @@ func (r *HotelRepository) HotelsList(filter models.HotelList) ([]models.Hotel, e
 
 func (r *RoomRepository) RoomList(filter models.RoomList) ([]models.Room, error) {
 	var rooms []models.Room
-	query := "SELECT id,hotel_id ,room_name, room_type, price FROM rooms WHERE 1=1"
+	query := "SELECT id, hotel_id, room_type, price, total_rooms, capacity FROM rooms WHERE 1=1"
 	params := []any{}
 	i := 1
 
@@ -241,7 +252,7 @@ func (r *RoomRepository) RoomList(filter models.RoomList) ([]models.Room, error)
 
 	for result.Next() {
 		var r models.Room
-		err := result.Scan(&r.ID, &r.HotelID, &r.RoomName, &r.RoomType, &r.Price)
+		err := result.Scan(&r.ID, &r.HotelID, &r.RoomType, &r.Price, &r.TotalRooms, &r.Capacity)
 		if err != nil {
 			return nil, err
 		}
@@ -250,6 +261,82 @@ func (r *RoomRepository) RoomList(filter models.RoomList) ([]models.Room, error)
 	}
 	return rooms, nil
 
+}
+
+func (r *RoomRepository) FindRoomById(RoomID int) (models.Room, error) {
+	var room models.Room
+
+	err := r.DB.QueryRow(
+		`SELECT id, hotel_id, room_type, price, total_rooms, capacity FROM rooms WHERE id = $1`,
+		RoomID,
+	).Scan(
+		&room.ID,
+		&room.HotelID,
+		&room.RoomType,
+		&room.Price,
+		&room.TotalRooms,
+		&room.Capacity,
+	)
+
+	if err != nil {
+		return models.Room{}, fmt.Errorf(" %w", err)
+	}
+	return room, nil
+
+}
+
+func (r *BookingRepository) BookRoom(UserID int, req models.BookRoomRequest, room models.Room) (models.Booking, error) {
+	tx, err := r.DB.Begin()
+	if err != nil {
+		return models.Booking{}, fmt.Errorf("begin transaction: %w", err)
+	}
+	defer tx.Rollback()
+
+	var booking models.Booking
+	err = tx.QueryRow(
+		`INSERT INTO bookings (
+			user_id,
+			room_id,
+			room_count,
+			check_in,
+			check_out,
+			guest_count,
+			total_price
+		)
+		VALUES ($1,$2,$3,$4,$5,$6,$7)
+		RETURNING id, created_at`,
+		UserID,
+		req.RoomID,
+		req.RoomCount,
+		req.CheckIn,
+		req.CheckOut,
+		len(req.Guests),
+		room.Price*float64(req.RoomCount),
+	).Scan(
+		&booking.ID,
+		&booking.CreatedAt,
+	)
+
+	if err != nil {
+		return models.Booking{}, fmt.Errorf("insert booking: %w", err)
+	}
+	_, err = tx.Exec(
+		`UPDATE rooms
+		SET total_rooms = total_rooms - $1
+		WHERE id = $2`,
+		req.RoomCount,
+		req.RoomID,
+	)
+	if err != nil {
+		return models.Booking{}, fmt.Errorf("update room: %w", err)
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return models.Booking{}, fmt.Errorf("commit transaction: %w", err)
+	}
+
+	return booking, nil
 }
 
 // func (r *RoomRepository) FindById(id int) (models.UpdateRoom, error) {
@@ -268,5 +355,3 @@ func (r *RoomRepository) RoomList(filter models.RoomList) ([]models.Room, error)
 // 	return update, err
 
 // }
-
-// admin

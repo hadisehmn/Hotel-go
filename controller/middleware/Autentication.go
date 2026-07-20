@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"context"
 	"go-practice/HOTEL/models"
 	"go-practice/HOTEL/utils"
 	"net/http"
@@ -27,6 +28,26 @@ func Authentication(next http.Handler) http.Handler {
 			http.Error(w, "Invalid token", http.StatusUnauthorized)
 			return
 		}
+		claims, ok := token.Claims.(jwt.MapClaims)
+		if !ok {
+			http.Error(w, "Invalid claims", http.StatusUnauthorized)
+			return
+		}
+
+		userIDFloat, ok := claims["user_id"].(float64)
+		if !ok {
+			http.Error(w, "user id not found", http.StatusUnauthorized)
+			return
+		}
+
+		userID := int(userIDFloat)
+		ctx := context.WithValue(
+			r.Context(),
+			"userID",
+			userID,
+		)
+
+		r = r.WithContext(ctx)
 
 		next.ServeHTTP(w, r)
 

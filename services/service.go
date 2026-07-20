@@ -1,6 +1,7 @@
 package services
 
 import (
+	"errors"
 	"fmt"
 	"go-practice/HOTEL/models"
 	"go-practice/HOTEL/repository"
@@ -19,6 +20,10 @@ type HotelService struct {
 type RoomService struct {
 	repo *repository.RoomRepository
 }
+type BookingService struct {
+	roomRepo    *repository.RoomRepository
+	bookingRepo *repository.BookingRepository
+}
 
 func NewUserService(repo *repository.UserRepository) *UserService {
 	return &UserService{
@@ -36,6 +41,12 @@ func NewRoomService(repo *repository.RoomRepository) *RoomService {
 	return &RoomService{
 		repo: repo,
 	}
+}
+
+func NewBookingService(roomRepo *repository.RoomRepository, bookingRepo *repository.BookingRepository) *BookingService {
+	return &BookingService{
+		roomRepo:    roomRepo,
+		bookingRepo: bookingRepo}
 }
 
 func (s *UserService) SignUp(u models.User) error {
@@ -106,11 +117,14 @@ func (s *RoomService) AddRoom(room models.Room) error {
 		return fmt.Errorf("invalid room capacity")
 	}
 
-	exist, err := s.repo.ExistRoom(room.HotelID, room.RoomName)
+	if room.TotalRooms <= 0 {
+		return fmt.Errorf("invalid room count")
+	}
+
+	exist, err := s.repo.ExistRoom(room.HotelID, room.RoomType)
 	if err != nil {
 		return fmt.Errorf("add room: %w", err)
 	}
-
 	if exist {
 		return fmt.Errorf("Room already exists")
 	}
@@ -154,4 +168,33 @@ func (s *HotelService) HotelsList(filter models.HotelList) ([]models.Hotel, erro
 func (s *RoomService) RoomList(filter models.RoomList) ([]models.Room, error) {
 	return s.repo.RoomList(filter)
 
+}
+
+var (
+	ErrRoomNotFound    = errors.New("room not found")
+	ErrInvalidData     = errors.New("invalid data")
+	ErrInvalidDate     = errors.New("invalid date")
+	ErrNotEnoughRooms  = errors.New("not enough rooms available")
+	ErrInvalidCapacity = errors.New("invalid capacity")
+)
+
+func (s *BookingService) BookRoom(UserID int, req models.BookRoomRequest) (models.Booking, error) {
+
+	room, err := s.roomRepo.FindRoomById(req.RoomID)
+	if err != nil {
+		return models.Booking{}, ErrRoomNotFound
+	}
+	if req.RoomCount <= 0 {
+		return models.Booking{}, ErrInvalidData
+	}
+	if room.TotalRooms < req.RoomCount {
+		return models.Booking{}, ErrNotEnoughRooms
+	}
+	if room.Capacity < len(req.Guests) {
+		return models.Booking{}, ErrInvalidCapacity
+	}
+	if req.CheckOut.Before(req.CheckIn) || req.CheckOut.Equal(req.CheckIn) {
+		return models.Booking{}, ErrInvalidDate
+	}
+	return s.bookingRepo.BookRoom(UserID, req, room)
 }

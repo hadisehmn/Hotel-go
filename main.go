@@ -71,6 +71,10 @@ func main() {
 	roomService := services.NewRoomService(roomRepo)
 	roomController := controller.NewRoomController(roomService)
 
+	bookingRepo := repository.NewBookingRepository(db)
+	bookingService := services.NewBookingService(roomRepo, bookingRepo)
+	bookingController := controller.NewBookingController(bookingService)
+
 	http.HandleFunc("/user/signup", userController.SignUp)
 	http.HandleFunc("/user/signin", userController.SignIn)
 	http.HandleFunc("/user/hotellist", hotelController.HotelsList)
@@ -113,6 +117,13 @@ func main() {
 			middleware.AdminOnly(
 				http.HandlerFunc(roomController.DeleteRoom),
 			),
+		),
+	)
+
+	http.Handle(
+		"/user/bookroom",
+		middleware.Authentication(
+			http.HandlerFunc(bookingController.BookRoom),
 		),
 	)
 

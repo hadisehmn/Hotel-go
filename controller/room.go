@@ -49,7 +49,7 @@ func (rc *RoomController) AddRoom(w http.ResponseWriter, r *http.Request) {
 			return
 
 		default:
-			http.Error(w, "Room already exists", http.StatusInternalServerError)
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 
 		}
 		return
@@ -158,61 +158,3 @@ func (rl *RoomController) RoomList(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(list)
 
 }
-
-// func (br *RoomController) BookRoom(w http.ResponseWriter, r *http.Request) {
-
-// 	if r.Method != http.MethodPost {
-// 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-// 		return
-// 	}
-
-// 	var req models.BookRoomRequest
-// 	err := json.NewDecoder(r.Body).Decode(&req)
-// 	if err != nil {
-// 		http.Error(w, "Invalid body", http.StatusBadRequest)
-// 		return
-// 	}
-
-// 	if req.RoomID == 0 {
-// 		http.Error(w, "room_id is required", http.StatusBadRequest)
-// 		return
-
-// 	}
-
-// 	if req.UserID == 0 {
-// 		http.Error(w, "user_id is required", http.StatusBadRequest)
-// 		return
-// 	}
-
-// 	if req.CheckIn.IsZero() || req.CheckOut.IsZero() {
-// 		http.Error(w, "check_in and check_out time is required", http.StatusBadRequest)
-// 		return
-
-// 	}
-
-// 	err = br.service.BookRoom(req)
-// 	if err != nil {
-// 		log.Printf("Booking room failed: %v", err)
-// 		switch err.Error() {
-// 		case "room not found":
-// 			http.Error(w, "Room not found", http.StatusNotFound)
-// 			return
-
-// 		case "room is already booked":
-// 			http.Error(w, "room is already booked", http.StatusConflict)
-// 			return
-
-// 		case "invalid date":
-// 			http.Error(w, "invalid date", http.StatusBadRequest)
-// 			return
-
-// 		default:
-// 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-// 			return
-
-// 		}
-
-// 	}
-// 	fmt.Fprintln(w, "Room booked successfully")
-
-// }
