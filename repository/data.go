@@ -338,20 +338,3 @@ func (r *BookingRepository) BookRoom(UserID int, req models.BookRoomRequest, roo
 
 	return booking, nil
 }
-
-// func (r *RoomRepository) FindById(id int) (models.UpdateRoom, error) {
-
-// 	var update models.UpdateRoom
-// 	err := r.DB.QueryRow(
-// 		"SELECT id FROM rooms WHERE id = $1",
-// 		id,
-// 	).Scan(
-// 		&update.ID,
-// 	)
-// 	if err == sql.ErrNoRows {
-// 		return update, fmt.Errorf("room not found")
-// 	}
-
-// 	return update, err
-
-// }
