@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"go-practice/HOTEL/models"
+	"go-practice/HOTEL/repository"
 	"go-practice/HOTEL/services"
 	"log"
 	"net/http"
@@ -61,7 +62,7 @@ func (br *BookingController) BookRoom(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "Room not found", http.StatusNotFound)
 			return
 
-		case errors.Is(err, services.ErrNotEnoughRooms):
+		case errors.Is(err, repository.ErrNotEnoughRooms):
 			http.Error(w, "Not enough rooms available", http.StatusConflict)
 			return
 

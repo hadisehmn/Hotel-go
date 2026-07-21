@@ -5,8 +5,16 @@ import (
 	"fmt"
 	"go-practice/HOTEL/models"
 	"go-practice/HOTEL/repository"
+	"time"
 
 	"golang.org/x/crypto/bcrypt"
+)
+
+var (
+	ErrRoomNotFound    = errors.New("room not found")
+	ErrInvalidData     = errors.New("invalid data")
+	ErrInvalidDate     = errors.New("invalid date")
+	ErrInvalidCapacity = errors.New("invalid capacity")
 )
 
 type UserService struct {
@@ -170,31 +178,31 @@ func (s *RoomService) RoomList(filter models.RoomList) ([]models.Room, error) {
 
 }
 
-var (
-	ErrRoomNotFound    = errors.New("room not found")
-	ErrInvalidData     = errors.New("invalid data")
-	ErrInvalidDate     = errors.New("invalid date")
-	ErrNotEnoughRooms  = errors.New("not enough rooms available")
-	ErrInvalidCapacity = errors.New("invalid capacity")
-)
-
 func (s *BookingService) BookRoom(UserID int, req models.BookRoomRequest) (models.Booking, error) {
-
 	room, err := s.roomRepo.FindRoomById(req.RoomID)
+
 	if err != nil {
 		return models.Booking{}, ErrRoomNotFound
-	}
-	if req.RoomCount <= 0 {
-		return models.Booking{}, ErrInvalidData
-	}
-	if room.TotalRooms < req.RoomCount {
-		return models.Booking{}, ErrNotEnoughRooms
-	}
-	if room.Capacity < len(req.Guests) {
-		return models.Booking{}, ErrInvalidCapacity
 	}
 	if req.CheckOut.Before(req.CheckIn) || req.CheckOut.Equal(req.CheckIn) {
 		return models.Booking{}, ErrInvalidDate
 	}
+	if req.CheckIn.Before(time.Now()) {
+		return models.Booking{}, ErrInvalidDate
+	}
+	if len(req.Guests) == 0 {
+		return models.Booking{}, ErrInvalidData
+	}
+	if len(req.Guests) > room.Capacity*req.RoomCount {
+		return models.Booking{}, ErrInvalidCapacity
+	}
+	if req.RoomCount <= 0 {
+		return models.Booking{}, ErrInvalidData
+	}
+	if room.Capacity < len(req.Guests) {
+		return models.Booking{}, ErrInvalidCapacity
+	}
+
 	return s.bookingRepo.BookRoom(UserID, req, room)
+
 }

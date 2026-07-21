@@ -18,15 +18,6 @@ const (
 	Infant GuestType = "infant"
 )
 
-// type Room struct {
-// 	ID       int      `json:"id"`
-// 	HotelID  int      `json:"hotel_id"`
-// 	RoomName string   `json:"room_name"`
-// 	RoomType RoomType `json:"room_type"`
-// 	Price    float64  `json:"price"`
-// 	Capacity int      `json:"capacity"`
-// }
-
 type Room struct {
 	ID         int      `json:"id"`
 	HotelID    int      `json:"hotel_id"`
@@ -58,4 +49,11 @@ type BookRoomRequest struct {
 	CheckIn   time.Time   `json:"check_in"`
 	CheckOut  time.Time   `json:"check_out"`
 	Guests    []GuestType `json:"guests"`
+}
+
+type RoomPrice struct {
+	ID        int       `json:"id"`
+	RoomID    int       `json:"room_id"`
+	GuestType GuestType `json:"guest_type"`
+	Price     float64   `json:"price"`
 }

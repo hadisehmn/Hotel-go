@@ -2,8 +2,20 @@ package repository
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"go-practice/HOTEL/models"
+)
+
+var (
+	ErrNotEnoughRooms = errors.New("not enough rooms available")
+	ErrUserNotFound   = errors.New("user not found")
+	ErrHotelNotFound  = errors.New("hotel not found")
+	ErrRoomNotFound   = errors.New("room not found")
+	ErrUserExists     = errors.New("user already exists")
+	ErrHotelExists    = errors.New("hotel already exists")
+	ErrRoomExists     = errors.New("room already exists")
+	ErrPriceNotFound  = errors.New("room price not found")
 )
 
 type UserRepository struct {
@@ -85,13 +97,12 @@ func (r *UserRepository) FindByName(name string) (models.User, error) {
 		&user.Role,
 	)
 	if err != nil {
-		if err == sql.ErrNoRows {
-			return user, fmt.Errorf("user not found")
+		if errors.Is(err, sql.ErrNoRows) {
+			return models.User{}, ErrUserNotFound
 		}
 
-		return user, fmt.Errorf("find user by name: %w", err)
+		return models.User{}, fmt.Errorf("find user: %w", err)
 	}
-
 	return user, nil
 
 }
@@ -279,10 +290,30 @@ func (r *RoomRepository) FindRoomById(RoomID int) (models.Room, error) {
 	)
 
 	if err != nil {
-		return models.Room{}, fmt.Errorf(" %w", err)
+		if errors.Is(err, sql.ErrNoRows) {
+			return models.Room{}, ErrRoomNotFound
+		}
+
+		return models.Room{}, fmt.Errorf("find room: %w", err)
 	}
 	return room, nil
 
+}
+
+func calculateTotalPrice(prices []models.RoomPrice, guests []models.GuestType) float64 {
+	var total float64
+
+	for _, guest := range guests {
+		for _, price := range prices {
+			if guest == price.GuestType {
+				total += price.Price
+
+			}
+
+		}
+
+	}
+	return total
 }
 
 func (r *BookingRepository) BookRoom(UserID int, req models.BookRoomRequest, room models.Room) (models.Booking, error) {
@@ -292,7 +323,48 @@ func (r *BookingRepository) BookRoom(UserID int, req models.BookRoomRequest, roo
 	}
 	defer tx.Rollback()
 
+	var reservedRooms int
+
+	err = tx.QueryRow(
+		"SELECT COALESCE(SUM(room_count), 0)FROM bookings WHERE room_id = $1 AND check_out > $2 AND check_in < $3",
+		req.RoomID,
+		req.CheckIn,
+		req.CheckOut,
+	).Scan(&reservedRooms)
+	if err != nil {
+		return models.Booking{}, fmt.Errorf("get reserved rooms: %w", err)
+	}
+	availableRooms := room.TotalRooms - reservedRooms
+
+	if availableRooms < req.RoomCount {
+		return models.Booking{}, ErrNotEnoughRooms
+	}
+
+	var prices []models.RoomPrice
+	rows, err := tx.Query(
+		`SELECT guest_type, price FROM room_prices WHERE room_id = $1`,
+		req.RoomID,
+	)
+	if err != nil {
+		return models.Booking{}, fmt.Errorf("get room prices: %w", err)
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var price models.RoomPrice
+		err = rows.Scan(&price.GuestType, &price.Price)
+		if err != nil {
+			return models.Booking{}, fmt.Errorf("scan room prices: %w", err)
+		}
+		prices = append(prices, price)
+	}
+
+	oneNightPrice := calculateTotalPrice(prices, req.Guests)
+	nights := int(req.CheckOut.Sub(req.CheckIn).Hours() / 24)
+	TotalPrice := oneNightPrice * float64(nights) * float64(req.RoomCount)
+
 	var booking models.Booking
+
 	err = tx.QueryRow(
 		`INSERT INTO bookings (
 			user_id,
@@ -311,7 +383,7 @@ func (r *BookingRepository) BookRoom(UserID int, req models.BookRoomRequest, roo
 		req.CheckIn,
 		req.CheckOut,
 		len(req.Guests),
-		room.Price*float64(req.RoomCount),
+		TotalPrice,
 	).Scan(
 		&booking.ID,
 		&booking.CreatedAt,
@@ -319,16 +391,6 @@ func (r *BookingRepository) BookRoom(UserID int, req models.BookRoomRequest, roo
 
 	if err != nil {
 		return models.Booking{}, fmt.Errorf("insert booking: %w", err)
-	}
-	_, err = tx.Exec(
-		`UPDATE rooms
-		SET total_rooms = total_rooms - $1
-		WHERE id = $2`,
-		req.RoomCount,
-		req.RoomID,
-	)
-	if err != nil {
-		return models.Booking{}, fmt.Errorf("update room: %w", err)
 	}
 
 	err = tx.Commit()
