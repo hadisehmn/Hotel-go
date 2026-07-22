@@ -505,14 +505,6 @@ func (r *BookingRepository) BookRoom(UserID int, req models.BookRoomRequest, roo
 	booking.CheckOut = req.CheckOut
 	booking.GuestCount = len(req.Guests)
 	booking.TotalPrice = TotalPrice
-	// var guestPrices []models.GuestPriceDetail
-
-	// for _, p := range prices {
-	// 	guestPrices = append(guestPrices, models.GuestPriceDetail{
-	// 		GuestType: p.GuestType,
-	// 		Price:     p.Price,
-	// 	})
-	// }
 
 	err = tx.Commit()
 	if err != nil {
