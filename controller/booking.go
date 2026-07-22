@@ -3,8 +3,8 @@ package controller
 import (
 	"encoding/json"
 	"errors"
+	"go-practice/HOTEL/apperror"
 	"go-practice/HOTEL/models"
-	"go-practice/HOTEL/repository"
 	"go-practice/HOTEL/services"
 	"log"
 	"net/http"
@@ -58,31 +58,30 @@ func (br *BookingController) BookRoom(w http.ResponseWriter, r *http.Request) {
 		log.Printf("Booking room failed: %v", err)
 
 		switch {
-		case errors.Is(err, services.ErrRoomNotFound):
+
+		case errors.Is(err, apperror.ErrRoomNotFound):
 			http.Error(w, "Room not found", http.StatusNotFound)
-			return
 
-		case errors.Is(err, repository.ErrNotEnoughRooms):
+		case errors.Is(err, apperror.ErrNotEnoughRooms):
 			http.Error(w, "Not enough rooms available", http.StatusConflict)
-			return
 
-		case errors.Is(err, services.ErrInvalidCapacity):
+		case errors.Is(err, apperror.ErrInvalidCapacity):
 			http.Error(w, "Room capacity exceeded", http.StatusBadRequest)
-			return
 
-		case errors.Is(err, services.ErrInvalidData):
-			http.Error(w, "Invalid data", http.StatusBadRequest)
-			return
+		case errors.Is(err, apperror.ErrInvalidData):
+			http.Error(w, "Invalid booking information", http.StatusBadRequest)
 
-		case errors.Is(err, services.ErrInvalidDate):
-			http.Error(w, "Invalid date", http.StatusBadRequest)
-			return
+		case errors.Is(err, apperror.ErrInvalidDate):
+			http.Error(w, "Invalid check-in/check-out date", http.StatusBadRequest)
+
+		case errors.Is(err, apperror.ErrPriceNotFound):
+			http.Error(w, "Room price not found", http.StatusNotFound)
 
 		default:
-			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-			return
+			log.Printf("BookRoom: %v", err)
+			http.Error(w, "Internal server error", http.StatusInternalServerError)
 		}
-
+		return
 	}
 
 	response := models.BookingResponse{

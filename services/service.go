@@ -1,20 +1,13 @@
 package services
 
 import (
-	"errors"
 	"fmt"
+	"go-practice/HOTEL/apperror"
 	"go-practice/HOTEL/models"
 	"go-practice/HOTEL/repository"
 	"time"
 
 	"golang.org/x/crypto/bcrypt"
-)
-
-var (
-	ErrRoomNotFound    = errors.New("room not found")
-	ErrInvalidData     = errors.New("invalid data")
-	ErrInvalidDate     = errors.New("invalid date")
-	ErrInvalidCapacity = errors.New("invalid capacity")
 )
 
 type UserService struct {
@@ -61,13 +54,12 @@ func (s *UserService) SignUp(u models.User) error {
 
 	exists, err := s.repo.ExistsByName(u.Name)
 	if err != nil {
-		return fmt.Errorf("signup: %w", err)
+		return fmt.Errorf("check user exists: %w", err)
 	}
 
 	if exists {
-		return fmt.Errorf("user already exists")
+		return fmt.Errorf("signup: %w", apperror.ErrUserExists)
 	}
-
 	u.Role = models.UserRoleUser
 
 	hashed, err := bcrypt.GenerateFromPassword([]byte(u.Password), bcrypt.DefaultCost)
@@ -78,7 +70,7 @@ func (s *UserService) SignUp(u models.User) error {
 	u.Password = string(hashed)
 
 	if err := s.repo.CreateUser(u); err != nil {
-		return fmt.Errorf("signup: %w", err)
+		return fmt.Errorf("create user: %w", err)
 	}
 
 	return nil
@@ -89,14 +81,14 @@ func (s *UserService) SignIn(u models.User) (models.User, error) {
 
 	user, err := s.repo.FindByName(u.Name)
 	if err != nil {
-		return emptyUser, fmt.Errorf("user not found")
+		return emptyUser, fmt.Errorf("signin: %w", apperror.ErrUserNotFound)
 	}
 	err = bcrypt.CompareHashAndPassword(
 		[]byte(user.Password),
 		[]byte(u.Password))
 
 	if err != nil {
-		return emptyUser, fmt.Errorf("wrong password")
+		return emptyUser, fmt.Errorf("signin: %w", apperror.ErrWrongPassword)
 	}
 	return user, nil
 }
@@ -105,15 +97,14 @@ func (s *HotelService) AddHotel(h models.Hotel) error {
 
 	exist, err := s.repo.ExistsHotel(h.HotelName)
 	if err != nil {
-		return fmt.Errorf("add hotel: %w", err)
+		return fmt.Errorf("check hotel exists: %w", err)
 	}
 
 	if exist {
-		return fmt.Errorf("hotel already exists")
+		return fmt.Errorf("add hotel: %w", apperror.ErrHotelExists)
 	}
-
 	if err := s.repo.CreateHotel(h); err != nil {
-		return fmt.Errorf("add hotel: %w", err)
+		return fmt.Errorf("create hotel: %w", err)
 	}
 
 	return nil
@@ -122,23 +113,23 @@ func (s *HotelService) AddHotel(h models.Hotel) error {
 func (s *RoomService) AddRoom(room models.Room) error {
 
 	if room.Capacity <= 0 {
-		return fmt.Errorf("invalid room capacity")
+		return fmt.Errorf("add room: %w", apperror.ErrInvalidCapacity)
 	}
 
 	if room.TotalRooms <= 0 {
-		return fmt.Errorf("invalid room count")
+		return fmt.Errorf("add room: %w", apperror.ErrInvalidRoomCount)
 	}
 
 	exist, err := s.repo.ExistRoom(room.HotelID, room.RoomType)
 	if err != nil {
-		return fmt.Errorf("add room: %w", err)
+		return fmt.Errorf("check room exists: %w", err)
 	}
 	if exist {
-		return fmt.Errorf("Room already exists")
+		return fmt.Errorf("add room: %w", apperror.ErrRoomExists)
 	}
 
 	if err := s.repo.CreateRoom(room); err != nil {
-		return fmt.Errorf("add room: %w", err)
+		return fmt.Errorf("create room: %w", err)
 	}
 
 	return nil
@@ -170,39 +161,49 @@ func (s *RoomService) DeleteRoom(deleteroom models.DeleteRoom) error {
 }
 
 func (s *HotelService) HotelsList(filter models.HotelList) ([]models.Hotel, error) {
-	return s.repo.HotelsList(filter)
+	hotels, err := s.repo.HotelsList(filter)
+	if err != nil {
+		return nil, fmt.Errorf("list hotels: %w", err)
+	}
+	return hotels, nil
 }
 
 func (s *RoomService) RoomList(filter models.RoomList) ([]models.Room, error) {
-	return s.repo.RoomList(filter)
+	rooms, err := s.repo.RoomList(filter)
+	if err != nil {
+		return nil, fmt.Errorf("list rooms: %w", err)
+	}
+	return rooms, nil
 
 }
 
 func (s *BookingService) BookRoom(UserID int, req models.BookRoomRequest) (models.Booking, error) {
-	room, err := s.roomRepo.FindRoomById(req.RoomID)
 
+	room, err := s.roomRepo.FindRoomByID(req.RoomID)
 	if err != nil {
-		return models.Booking{}, ErrRoomNotFound
-	}
-	if req.CheckOut.Before(req.CheckIn) || req.CheckOut.Equal(req.CheckIn) {
-		return models.Booking{}, ErrInvalidDate
-	}
-	if req.CheckIn.Before(time.Now()) {
-		return models.Booking{}, ErrInvalidDate
-	}
-	if len(req.Guests) == 0 {
-		return models.Booking{}, ErrInvalidData
-	}
-	if len(req.Guests) > room.Capacity*req.RoomCount {
-		return models.Booking{}, ErrInvalidCapacity
+		return models.Booking{}, fmt.Errorf("book room: %w", apperror.ErrRoomNotFound)
 	}
 	if req.RoomCount <= 0 {
-		return models.Booking{}, ErrInvalidData
+		return models.Booking{}, fmt.Errorf("book room: %w", apperror.ErrInvalidData)
+	}
+	if req.CheckOut.Before(req.CheckIn) || req.CheckOut.Equal(req.CheckIn) {
+		return models.Booking{}, fmt.Errorf("book room: %w", apperror.ErrInvalidDate)
+	}
+	if req.CheckIn.Before(time.Now()) {
+		return models.Booking{}, fmt.Errorf("book room: %w", apperror.ErrInvalidDate)
+	}
+	if len(req.Guests) == 0 {
+		return models.Booking{}, fmt.Errorf("book room: %w", apperror.ErrInvalidData)
+	}
+	if len(req.Guests) > room.Capacity*req.RoomCount {
+		return models.Booking{}, fmt.Errorf("book room: %w", apperror.ErrInvalidCapacity)
 	}
 	if room.Capacity < len(req.Guests) {
-		return models.Booking{}, ErrInvalidCapacity
+		return models.Booking{}, fmt.Errorf("book room: %w", apperror.ErrInvalidCapacity)
 	}
-
-	return s.bookingRepo.BookRoom(UserID, req, room)
-
+	booking, err := s.bookingRepo.BookRoom(UserID, req, room)
+	if err != nil {
+		return models.Booking{}, fmt.Errorf("create booking: %w", err)
+	}
+	return booking, nil
 }

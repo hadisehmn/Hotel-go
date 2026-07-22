@@ -4,18 +4,8 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"go-practice/HOTEL/apperror"
 	"go-practice/HOTEL/models"
-)
-
-var (
-	ErrNotEnoughRooms = errors.New("not enough rooms available")
-	ErrUserNotFound   = errors.New("user not found")
-	ErrHotelNotFound  = errors.New("hotel not found")
-	ErrRoomNotFound   = errors.New("room not found")
-	ErrUserExists     = errors.New("user already exists")
-	ErrHotelExists    = errors.New("hotel already exists")
-	ErrRoomExists     = errors.New("room already exists")
-	ErrPriceNotFound  = errors.New("room price not found")
 )
 
 type UserRepository struct {
@@ -98,7 +88,7 @@ func (r *UserRepository) FindByName(name string) (models.User, error) {
 	)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return models.User{}, ErrUserNotFound
+			return models.User{}, apperror.ErrUserNotFound
 		}
 
 		return models.User{}, fmt.Errorf("find user: %w", err)
@@ -167,7 +157,7 @@ func (r *RoomRepository) ExistRoom(HotelID int, roomType models.RoomType) (bool,
 }
 
 func (r *RoomRepository) UpdateRoom(id int, roomup models.UpdateRoom) error {
-	_, err := r.DB.Exec(
+	result, err := r.DB.Exec(
 		"UPDATE rooms SET room_type=$1, price=$2, total_rooms=$3 , capacity=$4 WHERE id = $5",
 		roomup.RoomType,
 		roomup.Price,
@@ -178,27 +168,58 @@ func (r *RoomRepository) UpdateRoom(id int, roomup models.UpdateRoom) error {
 	if err != nil {
 		return fmt.Errorf("update room: %w", err)
 	}
+
+	rows, err := result.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("check updated room: %w", err)
+	}
+
+	if rows == 0 {
+		return apperror.ErrRoomNotFound
+	}
 	return nil
 }
 func (r *HotelRepository) DeleteHotel(deletehotel models.DeleteHotel) error {
-	_, err := r.DB.Exec(
+	result, err := r.DB.Exec(
 		"DELETE FROM hotels WHERE id=$1",
 		deletehotel.ID,
 	)
+
 	if err != nil {
 		return fmt.Errorf("delete hotel: %w", err)
 	}
+
+	rows, err := result.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("check deleted hotel: %w", err)
+	}
+
+	if rows == 0 {
+		return apperror.ErrHotelNotFound
+	}
+
 	return nil
 }
 
 func (r *RoomRepository) DeleteRoom(deleteroom models.DeleteRoom) error {
-	_, err := r.DB.Exec(
+	result, err := r.DB.Exec(
 		"DELETE FROM rooms WHERE id=$1",
 		deleteroom.ID,
 	)
+
 	if err != nil {
 		return fmt.Errorf("delete room: %w", err)
 	}
+
+	rows, err := result.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("check deleted room: %w", err)
+	}
+
+	if rows == 0 {
+		return apperror.ErrRoomNotFound
+	}
+
 	return nil
 }
 
@@ -222,17 +243,21 @@ func (r *HotelRepository) HotelsList(filter models.HotelList) ([]models.Hotel, e
 	}
 	result, err := r.DB.Query(query, params...)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("query hotels: %w", err)
 	}
+	defer result.Close()
 
 	for result.Next() {
 		var h models.Hotel
 		err := result.Scan(&h.ID, &h.HotelName, &h.Star, &h.AveragePrice)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("scan hotel: %w", err)
 		}
 		hotels = append(hotels, h)
 
+	}
+	if err := result.Err(); err != nil {
+		return nil, fmt.Errorf("iterate hotels: %w", err)
 	}
 	return hotels, nil
 
@@ -257,24 +282,26 @@ func (r *RoomRepository) RoomList(filter models.RoomList) ([]models.Room, error)
 	}
 	result, err := r.DB.Query(query, params...)
 	if err != nil {
-		return nil, err
-
+		return nil, fmt.Errorf("query rooms: %w", err)
 	}
 
 	for result.Next() {
 		var r models.Room
 		err := result.Scan(&r.ID, &r.HotelID, &r.RoomType, &r.Price, &r.TotalRooms, &r.Capacity)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("scan room: %w", err)
 		}
 		rooms = append(rooms, r)
 
+	}
+	if err := result.Err(); err != nil {
+		return nil, fmt.Errorf("iterate rooms: %w", err)
 	}
 	return rooms, nil
 
 }
 
-func (r *RoomRepository) FindRoomById(RoomID int) (models.Room, error) {
+func (r *RoomRepository) FindRoomByID(RoomID int) (models.Room, error) {
 	var room models.Room
 
 	err := r.DB.QueryRow(
@@ -291,7 +318,7 @@ func (r *RoomRepository) FindRoomById(RoomID int) (models.Room, error) {
 
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return models.Room{}, ErrRoomNotFound
+			return models.Room{}, apperror.ErrRoomNotFound
 		}
 
 		return models.Room{}, fmt.Errorf("find room: %w", err)
@@ -300,7 +327,7 @@ func (r *RoomRepository) FindRoomById(RoomID int) (models.Room, error) {
 
 }
 
-func calculateTotalPrice(prices []models.RoomPrice, guests []models.GuestType) float64 {
+func calculateTotalPrice(prices []models.RoomPrice, guests []models.GuestType) (float64, error) {
 	var total float64
 
 	for _, guest := range guests {
@@ -313,7 +340,7 @@ func calculateTotalPrice(prices []models.RoomPrice, guests []models.GuestType) f
 		}
 
 	}
-	return total
+	return 0, apperror.ErrPriceNotFound
 }
 
 func (r *BookingRepository) BookRoom(UserID int, req models.BookRoomRequest, room models.Room) (models.Booking, error) {
@@ -337,7 +364,7 @@ func (r *BookingRepository) BookRoom(UserID int, req models.BookRoomRequest, roo
 	availableRooms := room.TotalRooms - reservedRooms
 
 	if availableRooms < req.RoomCount {
-		return models.Booking{}, ErrNotEnoughRooms
+		return models.Booking{}, apperror.ErrNotEnoughRooms
 	}
 
 	var prices []models.RoomPrice
@@ -352,14 +379,21 @@ func (r *BookingRepository) BookRoom(UserID int, req models.BookRoomRequest, roo
 
 	for rows.Next() {
 		var price models.RoomPrice
-		err = rows.Scan(&price.GuestType, &price.Price)
-		if err != nil {
+
+		if err := rows.Scan(&price.GuestType, &price.Price); err != nil {
 			return models.Booking{}, fmt.Errorf("scan room prices: %w", err)
 		}
 		prices = append(prices, price)
+
+		if err := rows.Err(); err != nil {
+			return models.Booking{}, fmt.Errorf("iterate room prices: %w", err)
+		}
 	}
 
-	oneNightPrice := calculateTotalPrice(prices, req.Guests)
+	oneNightPrice, err := calculateTotalPrice(prices, req.Guests)
+	if err != nil {
+		return models.Booking{}, fmt.Errorf("calculate total price: %w", err)
+	}
 	nights := int(req.CheckOut.Sub(req.CheckIn).Hours() / 24)
 	TotalPrice := oneNightPrice * float64(nights) * float64(req.RoomCount)
 
