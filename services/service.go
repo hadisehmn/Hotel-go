@@ -120,6 +120,16 @@ func (s *RoomService) AddRoom(room models.Room) error {
 		return fmt.Errorf("add room: %w", apperror.ErrInvalidRoomCount)
 	}
 
+	if len(room.Prices) == 0 {
+		return fmt.Errorf("add room: %w", apperror.ErrPricingRequired)
+	}
+
+	for _, p := range room.Prices {
+		if p.Price < 0 {
+			return fmt.Errorf("add room: %w", apperror.ErrInvalidPrice)
+		}
+	}
+
 	exist, err := s.repo.ExistRoom(room.HotelID, room.RoomType)
 	if err != nil {
 		return fmt.Errorf("check room exists: %w", err)
@@ -177,33 +187,33 @@ func (s *RoomService) RoomList(filter models.RoomList) ([]models.Room, error) {
 
 }
 
-func (s *BookingService) BookRoom(UserID int, req models.BookRoomRequest) (models.Booking, error) {
+func (s *BookingService) BookRoom(UserID int, req models.BookRoomRequest) (models.Booking, []models.GuestPriceDetail, error) {
 
 	room, err := s.roomRepo.FindRoomByID(req.RoomID)
 	if err != nil {
-		return models.Booking{}, fmt.Errorf("book room: %w", apperror.ErrRoomNotFound)
+		return models.Booking{}, nil, fmt.Errorf("book room: %w", apperror.ErrRoomNotFound)
 	}
 	if req.RoomCount <= 0 {
-		return models.Booking{}, fmt.Errorf("book room: %w", apperror.ErrInvalidData)
+		return models.Booking{}, nil, fmt.Errorf("book room: %w", apperror.ErrInvalidData)
 	}
 	if req.CheckOut.Before(req.CheckIn) || req.CheckOut.Equal(req.CheckIn) {
-		return models.Booking{}, fmt.Errorf("book room: %w", apperror.ErrInvalidDate)
+		return models.Booking{}, nil, fmt.Errorf("book room: %w", apperror.ErrInvalidDate)
 	}
 	if req.CheckIn.Before(time.Now()) {
-		return models.Booking{}, fmt.Errorf("book room: %w", apperror.ErrInvalidDate)
+		return models.Booking{}, nil, fmt.Errorf("book room: %w", apperror.ErrInvalidDate)
 	}
 	if len(req.Guests) == 0 {
-		return models.Booking{}, fmt.Errorf("book room: %w", apperror.ErrInvalidData)
+		return models.Booking{}, nil, fmt.Errorf("book room: %w", apperror.ErrInvalidData)
 	}
 	if len(req.Guests) > room.Capacity*req.RoomCount {
-		return models.Booking{}, fmt.Errorf("book room: %w", apperror.ErrInvalidCapacity)
+		return models.Booking{}, nil, fmt.Errorf("book room: %w", apperror.ErrInvalidCapacity)
 	}
 	if room.Capacity < len(req.Guests) {
-		return models.Booking{}, fmt.Errorf("book room: %w", apperror.ErrInvalidCapacity)
+		return models.Booking{}, nil, fmt.Errorf("book room: %w", apperror.ErrInvalidCapacity)
 	}
-	booking, err := s.bookingRepo.BookRoom(UserID, req, room)
+	booking, guestPrices, err := s.bookingRepo.BookRoom(UserID, req, room)
 	if err != nil {
-		return models.Booking{}, fmt.Errorf("create booking: %w", err)
+		return models.Booking{}, nil, fmt.Errorf("create booking: %w", err)
 	}
-	return booking, nil
+	return booking, guestPrices, nil
 }

@@ -2,7 +2,9 @@ package controller
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
+	"go-practice/HOTEL/apperror"
 	"go-practice/HOTEL/models"
 	"go-practice/HOTEL/services"
 	"go-practice/HOTEL/utils"
@@ -37,7 +39,7 @@ func (c *UserController) SignUp(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Printf("SignUp failed: %v", err)
 
-		if err.Error() == "user already exists" {
+		if errors.Is(err, apperror.ErrUserExists) {
 			http.Error(w, "User already exists", http.StatusConflict)
 			return
 		}
@@ -67,18 +69,16 @@ func (c *UserController) SignIn(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Printf("SignIn failed: %v", err)
 
-		if err.Error() == "user not found" {
+		switch {
+		case errors.Is(err, apperror.ErrUserNotFound):
 			http.Error(w, "User not found", http.StatusNotFound)
-			return
-		}
 
-		if err.Error() == "wrong password" {
+		case errors.Is(err, apperror.ErrWrongPassword):
 			http.Error(w, "Wrong password", http.StatusUnauthorized)
-			return
-		}
 
-		http.Error(w, "Authentication failed", http.StatusUnauthorized)
-		return
+		default:
+			http.Error(w, "Authentication failed", http.StatusUnauthorized)
+		}
 	}
 
 	token, err := utils.GenerateToken(dbUser)
@@ -86,7 +86,7 @@ func (c *UserController) SignIn(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Failed to generate token", http.StatusInternalServerError)
 		return
 	}
-
+	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]string{
 		"message": "login successful",
 		"token":   token,

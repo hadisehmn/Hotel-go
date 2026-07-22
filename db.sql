@@ -2,9 +2,9 @@
 
 CREATE TABLE users (
     id SERIAL PRIMARY KEY,
-    name VARCHAR(100) NOT NULL,
+    name VARCHAR(100) NOT NULL UNIQUE,
     age INT,
-    phone VARCHAR(20),
+    phone VARCHAR(20) UNIQUE,
     password_hash VARCHAR(255) NOT NULL,
     role VARCHAR(20) NOT NULL
 );
@@ -15,7 +15,7 @@ CREATE TABLE users (
 
 CREATE TABLE hotels (
     id SERIAL PRIMARY KEY,
-    hotel_name VARCHAR(100) NOT NULL,
+    hotel_name VARCHAR(100) NOT NULL UNIQUE,
     star INT,
     average_price NUMERIC(10,2)
 );
@@ -51,17 +51,15 @@ CREATE TABLE bookings (
 
 CREATE TABLE booking_guests (
     id SERIAL PRIMARY KEY,
-    booking_id INT REFERENCES bookings(id),
-    guest_type VARCHAR(20)
+    booking_id INT NOT NULL REFERENCES bookings(id),
+    guest_type VARCHAR(20) NOT NULL
 );
-
- 
 
 CREATE TABLE pricing_rules (
     id SERIAL PRIMARY KEY,
-    room_id INT REFERENCES rooms(id),
-    guest_type VARCHAR(20),
-    price NUMERIC(10,2)
+   room_id INT NOT NULL REFERENCES rooms(id),
+   guest_type VARCHAR(20) NOT NULL, 
+   price NUMERIC(10,2) NOT NULL
 );
-
+    
  

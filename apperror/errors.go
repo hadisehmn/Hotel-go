@@ -13,6 +13,8 @@ var (
 	ErrRoomExists       = errors.New("room already exists")
 	ErrRoomNotFound     = errors.New("room not found")
 	ErrInvalidRoomCount = errors.New("invalid room count")
+	ErrPricingRequired  = errors.New("room pricing is required")
+	ErrInvalidPrice     = errors.New("invalid price")
 
 	ErrNotEnoughRooms = errors.New("not enough rooms available")
 

@@ -15,7 +15,12 @@ type Booking struct {
 	CreatedAt  time.Time `json:"created_at"`
 }
 
+type GuestPriceDetail struct {
+	GuestType GuestType `json:"guest_type"`
+	Price     float64   `json:"price"`
+}
 type BookingResponse struct {
-	Message string  `json:"message"`
-	Booking Booking `json:"booking"`
+	Message     string             `json:"message"`
+	Booking     Booking            `json:"booking"`
+	GuestPrices []GuestPriceDetail `json:"guest_prices"`
 }

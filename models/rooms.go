@@ -19,12 +19,13 @@ const (
 )
 
 type Room struct {
-	ID         int      `json:"id"`
-	HotelID    int      `json:"hotel_id"`
-	RoomType   RoomType `json:"room_type"`
-	Price      float64  `json:"price"`
-	TotalRooms int      `json:"total_rooms"`
-	Capacity   int      `json:"capacity"`
+	ID         int         `json:"id"`
+	HotelID    int         `json:"hotel_id"`
+	RoomType   RoomType    `json:"room_type"`
+	Price      float64     `json:"price"`
+	TotalRooms int         `json:"total_rooms"`
+	Capacity   int         `json:"capacity"`
+	Prices     []RoomPrice `json:"prices"`
 }
 
 type UpdateRoom struct {
@@ -52,8 +53,8 @@ type BookRoomRequest struct {
 }
 
 type RoomPrice struct {
-	ID        int       `json:"id"`
-	RoomID    int       `json:"room_id"`
+	ID        int       `json:"-"`
+	RoomID    int       `json:"-"`
 	GuestType GuestType `json:"guest_type"`
 	Price     float64   `json:"price"`
 }

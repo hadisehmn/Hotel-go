@@ -127,18 +127,44 @@ func (r *HotelRepository) ExistsHotel(HotelName string) (bool, error) {
 }
 
 func (r *RoomRepository) CreateRoom(room models.Room) error {
+	tx, err := r.DB.Begin()
+	if err != nil {
+		return fmt.Errorf("begin transaction: %w", err)
+	}
+	defer tx.Rollback()
 
-	_, err := r.DB.Exec(
-		"INSERT INTO rooms(hotel_id, room_type, price, total_rooms, capacity) VALUES ($1, $2, $3, $4, $5)",
+	var roomID int
+
+	err = tx.QueryRow(
+		`INSERT INTO rooms(hotel_id, room_type, price, total_rooms, capacity)
+		 VALUES ($1, $2, $3, $4, $5)
+		 RETURNING id`,
 		room.HotelID,
 		room.RoomType,
 		room.Price,
 		room.TotalRooms,
 		room.Capacity,
-	)
+	).Scan(&roomID)
+
 	if err != nil {
 		return fmt.Errorf("create room: %w", err)
 	}
+	for _, p := range room.Prices {
+		_, err := tx.Exec(
+			`INSERT INTO pricing_rules (room_id, guest_type, price)
+			 VALUES ($1, $2, $3)`,
+			roomID,
+			p.GuestType,
+			p.Price,
+		)
+		if err != nil {
+			return fmt.Errorf("create pricing rule: %w", err)
+		}
+	}
+	if err := tx.Commit(); err != nil {
+		return fmt.Errorf("commit transaction: %w", err)
+	}
+
 	return nil
 }
 
@@ -284,21 +310,59 @@ func (r *RoomRepository) RoomList(filter models.RoomList) ([]models.Room, error)
 	if err != nil {
 		return nil, fmt.Errorf("query rooms: %w", err)
 	}
+	defer result.Close()
 
 	for result.Next() {
-		var r models.Room
-		err := result.Scan(&r.ID, &r.HotelID, &r.RoomType, &r.Price, &r.TotalRooms, &r.Capacity)
+		var room models.Room
+
+		err := result.Scan(
+			&room.ID,
+			&room.HotelID,
+			&room.RoomType,
+			&room.Price,
+			&room.TotalRooms,
+			&room.Capacity,
+		)
+
 		if err != nil {
 			return nil, fmt.Errorf("scan room: %w", err)
 		}
-		rooms = append(rooms, r)
 
+		priceRows, err := r.DB.Query(
+			`SELECT id, room_id, guest_type, price 
+			 FROM pricing_rules 
+			 WHERE room_id = $1`,
+			room.ID,
+		)
+
+		if err != nil {
+			return nil, fmt.Errorf("get room prices: %w", err)
+		}
+
+		for priceRows.Next() {
+			var p models.RoomPrice
+			err := priceRows.Scan(
+				&p.ID,
+				&p.RoomID,
+				&p.GuestType,
+				&p.Price,
+			)
+			if err != nil {
+				priceRows.Close()
+				return nil, fmt.Errorf("scan room price: %w", err)
+			}
+
+			room.Prices = append(room.Prices, p)
+		}
+		priceRows.Close()
+		rooms = append(rooms, room)
 	}
+
 	if err := result.Err(); err != nil {
 		return nil, fmt.Errorf("iterate rooms: %w", err)
 	}
-	return rooms, nil
 
+	return rooms, nil
 }
 
 func (r *RoomRepository) FindRoomByID(RoomID int) (models.Room, error) {
@@ -326,27 +390,36 @@ func (r *RoomRepository) FindRoomByID(RoomID int) (models.Room, error) {
 	return room, nil
 
 }
-
-func calculateTotalPrice(prices []models.RoomPrice, guests []models.GuestType) (float64, error) {
+func calculateTotalPrice(prices []models.RoomPrice, guests []models.GuestType) (float64, []models.GuestPriceDetail, error) {
 	var total float64
+	var guestPrices []models.GuestPriceDetail
 
 	for _, guest := range guests {
-		for _, price := range prices {
-			if guest == price.GuestType {
-				total += price.Price
+		found := false
+		for _, p := range prices {
+			if guest == p.GuestType {
 
+				total += p.Price
+				guestPrices = append(guestPrices, models.GuestPriceDetail{
+					GuestType: p.GuestType,
+					Price:     p.Price,
+				})
+				found = true
+				break
 			}
-
 		}
-
+		if !found {
+			return 0, nil, apperror.ErrPriceNotFound
+		}
 	}
-	return 0, apperror.ErrPriceNotFound
+
+	return total, guestPrices, nil
 }
 
-func (r *BookingRepository) BookRoom(UserID int, req models.BookRoomRequest, room models.Room) (models.Booking, error) {
+func (r *BookingRepository) BookRoom(UserID int, req models.BookRoomRequest, room models.Room) (models.Booking, []models.GuestPriceDetail, error) {
 	tx, err := r.DB.Begin()
 	if err != nil {
-		return models.Booking{}, fmt.Errorf("begin transaction: %w", err)
+		return models.Booking{}, nil, fmt.Errorf("begin transaction: %w", err)
 	}
 	defer tx.Rollback()
 
@@ -359,21 +432,21 @@ func (r *BookingRepository) BookRoom(UserID int, req models.BookRoomRequest, roo
 		req.CheckOut,
 	).Scan(&reservedRooms)
 	if err != nil {
-		return models.Booking{}, fmt.Errorf("get reserved rooms: %w", err)
+		return models.Booking{}, nil, fmt.Errorf("get reserved rooms: %w", err)
 	}
 	availableRooms := room.TotalRooms - reservedRooms
 
 	if availableRooms < req.RoomCount {
-		return models.Booking{}, apperror.ErrNotEnoughRooms
+		return models.Booking{}, nil, apperror.ErrNotEnoughRooms
 	}
 
 	var prices []models.RoomPrice
 	rows, err := tx.Query(
-		`SELECT guest_type, price FROM room_prices WHERE room_id = $1`,
+		`SELECT guest_type, price FROM pricing_rules WHERE room_id = $1`,
 		req.RoomID,
 	)
 	if err != nil {
-		return models.Booking{}, fmt.Errorf("get room prices: %w", err)
+		return models.Booking{}, nil, fmt.Errorf("get room prices: %w", err)
 	}
 	defer rows.Close()
 
@@ -381,18 +454,17 @@ func (r *BookingRepository) BookRoom(UserID int, req models.BookRoomRequest, roo
 		var price models.RoomPrice
 
 		if err := rows.Scan(&price.GuestType, &price.Price); err != nil {
-			return models.Booking{}, fmt.Errorf("scan room prices: %w", err)
+			return models.Booking{}, nil, fmt.Errorf("scan room prices: %w", err)
 		}
 		prices = append(prices, price)
-
-		if err := rows.Err(); err != nil {
-			return models.Booking{}, fmt.Errorf("iterate room prices: %w", err)
-		}
+	}
+	if err := rows.Err(); err != nil {
+		return models.Booking{}, nil, fmt.Errorf("iterate room prices: %w", err)
 	}
 
-	oneNightPrice, err := calculateTotalPrice(prices, req.Guests)
+	oneNightPrice, guestPrices, err := calculateTotalPrice(prices, req.Guests)
 	if err != nil {
-		return models.Booking{}, fmt.Errorf("calculate total price: %w", err)
+		return models.Booking{}, nil, fmt.Errorf("calculate total price: %w", err)
 	}
 	nights := int(req.CheckOut.Sub(req.CheckIn).Hours() / 24)
 	TotalPrice := oneNightPrice * float64(nights) * float64(req.RoomCount)
@@ -424,13 +496,28 @@ func (r *BookingRepository) BookRoom(UserID int, req models.BookRoomRequest, roo
 	)
 
 	if err != nil {
-		return models.Booking{}, fmt.Errorf("insert booking: %w", err)
+		return models.Booking{}, nil, fmt.Errorf("insert booking: %w", err)
 	}
+
+	booking.RoomID = req.RoomID
+	booking.RoomCount = req.RoomCount
+	booking.CheckIn = req.CheckIn
+	booking.CheckOut = req.CheckOut
+	booking.GuestCount = len(req.Guests)
+	booking.TotalPrice = TotalPrice
+	// var guestPrices []models.GuestPriceDetail
+
+	// for _, p := range prices {
+	// 	guestPrices = append(guestPrices, models.GuestPriceDetail{
+	// 		GuestType: p.GuestType,
+	// 		Price:     p.Price,
+	// 	})
+	// }
 
 	err = tx.Commit()
 	if err != nil {
-		return models.Booking{}, fmt.Errorf("commit transaction: %w", err)
+		return models.Booking{}, nil, fmt.Errorf("commit transaction: %w", err)
 	}
 
-	return booking, nil
+	return booking, guestPrices, nil
 }

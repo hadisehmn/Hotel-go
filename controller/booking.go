@@ -53,7 +53,7 @@ func (br *BookingController) BookRoom(w http.ResponseWriter, r *http.Request) {
 
 	}
 
-	booking, err := br.service.BookRoom(userID, req)
+	booking, guestPrices, err := br.service.BookRoom(userID, req)
 	if err != nil {
 		log.Printf("Booking room failed: %v", err)
 
@@ -84,9 +84,11 @@ func (br *BookingController) BookRoom(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	w.Header().Set("Content-Type", "application/json")
 	response := models.BookingResponse{
-		Message: "Room booked successfully",
-		Booking: booking,
+		Message:     "Room booked successfully",
+		Booking:     booking,
+		GuestPrices: guestPrices,
 	}
 
 	json.NewEncoder(w).Encode(response)
