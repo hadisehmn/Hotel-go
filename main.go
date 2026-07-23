@@ -127,5 +127,12 @@ func main() {
 		),
 	)
 
+	http.Handle(
+		"/user/bookinglist",
+		middleware.Authentication(
+			http.HandlerFunc(bookingController.GetBookingList),
+		),
+	)
+
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }

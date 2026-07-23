@@ -61,5 +61,15 @@ CREATE TABLE pricing_rules (
    guest_type VARCHAR(20) NOT NULL, 
    price NUMERIC(10,2) NOT NULL
 );
-    
+
+
+
+CREATE TABLE booking_guest_prices (
+    id SERIAL PRIMARY KEY,
+    booking_id INT NOT NULL REFERENCES bookings(id) ON DELETE CASCADE,
+    guest_type VARCHAR(20) NOT NULL,
+    price NUMERIC(10,2) NOT NULL
+);
+
+ 
  

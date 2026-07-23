@@ -472,17 +472,8 @@ func (r *BookingRepository) BookRoom(UserID int, req models.BookRoomRequest, roo
 	var booking models.Booking
 
 	err = tx.QueryRow(
-		`INSERT INTO bookings (
-			user_id,
-			room_id,
-			room_count,
-			check_in,
-			check_out,
-			guest_count,
-			total_price
-		)
-		VALUES ($1,$2,$3,$4,$5,$6,$7)
-		RETURNING id, created_at`,
+		`INSERT INTO bookings (user_id,room_id,room_count,check_in,	check_out,guest_count,total_price)
+		VALUES ($1,$2,$3,$4,$5,$6,$7)RETURNING id, created_at`,
 		UserID,
 		req.RoomID,
 		req.RoomCount,
@@ -506,10 +497,98 @@ func (r *BookingRepository) BookRoom(UserID int, req models.BookRoomRequest, roo
 	booking.GuestCount = len(req.Guests)
 	booking.TotalPrice = TotalPrice
 
+	for _, gp := range guestPrices {
+		_, err := tx.Exec(
+			`INSERT INTO booking_guest_prices (booking_id, guest_type, price) VALUES ($1, $2, $3)`,
+			booking.ID,
+			gp.GuestType,
+			gp.Price,
+		)
+
+		if err != nil {
+			return models.Booking{}, nil, fmt.Errorf("insert booking guest prices: %w", err)
+		}
+	}
+
 	err = tx.Commit()
 	if err != nil {
 		return models.Booking{}, nil, fmt.Errorf("commit transaction: %w", err)
 	}
 
 	return booking, guestPrices, nil
+}
+
+func (r *BookingRepository) GetBookingList(userID int) ([]models.BookingList, error) {
+	bookingresult, err := r.DB.Query(
+		`
+			SELECT bookings.*,rooms.room_type,hotels.hotel_name	FROM bookings
+			JOIN rooms ON bookings.room_id = rooms.id
+			JOIN hotels ON rooms.hotel_id = hotels.id
+			WHERE bookings.user_id = $1`,
+		userID,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("query bookings: %w", err)
+	}
+	defer bookingresult.Close()
+
+	var bookings []models.BookingList
+
+	for bookingresult.Next() {
+		var booking models.BookingList
+
+		err := bookingresult.Scan(
+			&booking.Booking.ID,
+			&booking.Booking.UserID,
+			&booking.Booking.RoomID,
+			&booking.Booking.RoomCount,
+			&booking.Booking.CheckIn,
+			&booking.Booking.CheckOut,
+			&booking.Booking.GuestCount,
+			&booking.Booking.TotalPrice,
+			&booking.Booking.CreatedAt,
+			&booking.RoomType,
+			&booking.HotelName,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("scan booking: %w", err)
+		}
+
+		priceResult, err := r.DB.Query(
+			`SELECT guest_type, price FROM booking_guest_prices WHERE booking_id = $1`,
+			booking.Booking.ID,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("query guest prices: %w", err)
+		}
+		for priceResult.Next() {
+			var price models.BookingGuestPriceResponse
+
+			err := priceResult.Scan(
+				&price.GuestType,
+				&price.Price,
+			)
+			if err != nil {
+				priceResult.Close()
+				return nil, fmt.Errorf("scan guest price: %w", err)
+			}
+
+			booking.GuestPrices = append(booking.GuestPrices, price)
+		}
+
+		if err := priceResult.Err(); err != nil {
+			priceResult.Close()
+			return nil, fmt.Errorf("iterate guest prices: %w", err)
+		}
+
+		priceResult.Close()
+		bookings = append(bookings, booking)
+	}
+
+	if err := bookingresult.Err(); err != nil {
+		return nil, fmt.Errorf("iterate bookings: %w", err)
+	}
+
+	return bookings, nil
+
 }

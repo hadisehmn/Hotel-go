@@ -217,3 +217,16 @@ func (s *BookingService) BookRoom(UserID int, req models.BookRoomRequest) (model
 	}
 	return booking, guestPrices, nil
 }
+
+func (s *BookingService) GetBookingList(userID int) ([]models.BookingList, error) {
+	bookings, err := s.bookingRepo.GetBookingList(userID)
+	if err != nil {
+		return nil, fmt.Errorf("get booking list: %w", err)
+	}
+
+	if len(bookings) == 0 {
+		return nil, apperror.ErrBookingNotFound
+	}
+
+	return bookings, nil
+}

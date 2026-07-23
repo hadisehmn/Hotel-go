@@ -15,6 +15,7 @@ var (
 	ErrInvalidRoomCount = errors.New("invalid room count")
 	ErrPricingRequired  = errors.New("room pricing is required")
 	ErrInvalidPrice     = errors.New("invalid price")
+	ErrPriceNotFound    = errors.New("room price not found")
 
 	ErrNotEnoughRooms = errors.New("not enough rooms available")
 
@@ -22,5 +23,5 @@ var (
 	ErrInvalidDate     = errors.New("invalid date")
 	ErrInvalidCapacity = errors.New("invalid capacity")
 
-	ErrPriceNotFound = errors.New("room price not found")
+	ErrBookingNotFound = errors.New("booking not found")
 )
